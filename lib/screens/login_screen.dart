@@ -8,26 +8,23 @@ import '../models/user.dart';
 import 'home_screen.dart';
 import 'dragon_selection_screen.dart';
 
-class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<RegistrationScreen> createState() => _RegistrationScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen>
+class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
   String? _errorMessage;
 
   bool _obscurePassword = true;
-  bool _obscureConfirm = true;
 
   late final AnimationController _entryController;
   late final Animation<double> _entryFade;
@@ -58,9 +55,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   @override
   void dispose() {
     _usernameController.dispose();
-    _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     _entryController.dispose();
     super.dispose();
   }
@@ -75,36 +70,65 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/register'),
+        Uri.parse('${ApiConfig.baseUrl}/login'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: jsonEncode({
           'username': _usernameController.text.trim(),
-          'email': _emailController.text.trim(),
           'password': _passwordController.text,
         }),
       );
 
       if (!mounted) return;
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final authResponse = AuthResponse.fromJson(body);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DragonSelectionScreen(
-              user: authResponse.user,
-              token: authResponse.token,
-            ),
-          ),
+        
+        final dragonResponse = await http.get(
+          Uri.parse('${ApiConfig.baseUrl}/dragon'),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ${authResponse.token}',
+          },
         );
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (dragonResponse.statusCode == 200) {
+          // Dragon exists
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HomeScreen(
+                user: authResponse.user,
+                token: authResponse.token,
+              ),
+            ),
+          );
+        } else {
+          // No dragon or error, go to dragon selection screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DragonSelectionScreen(
+                user: authResponse.user,
+                token: authResponse.token,
+              ),
+            ),
+          );
+        }
+
       } else {
         final body = jsonDecode(response.body);
         setState(() {
-          _errorMessage = body['error'] ?? 'Registration failed. Please try again.';
+          _errorMessage = body['error'] ?? 'Login failed. Please try again.';
           _isLoading = false;
         });
       }
@@ -158,7 +182,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
           // Title
           Text(
-            'Join the Guild',
+            'Welcome Back',
             style: GoogleFonts.medievalSharp(
               fontSize: 32,
               color: AppColors.onBackground,
@@ -169,7 +193,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           const SizedBox(height: 8),
 
           Text(
-            'Create your account and hatch your dragon.',
+            'Continue your adventure.',
             style: GoogleFonts.rosarivo(
               fontSize: 15,
               color: AppColors.secondary,
@@ -225,26 +249,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     if (v == null || v.trim().isEmpty) {
                       return 'Username is required';
                     }
-                    if (v.trim().length < 3) {
-                      return 'Username must be at least 3 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                _buildField(
-                  controller: _emailController,
-                  label: 'Email',
-                  icon: Icons.mail_outline_rounded,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
-                    final emailRegex =
-                        RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                    if (!emailRegex.hasMatch(v.trim())) {
-                      return 'Enter a valid email address';
-                    }
                     return null;
                   },
                 ),
@@ -259,28 +263,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       setState(() => _obscurePassword = !_obscurePassword),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                _buildField(
-                  controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  icon: Icons.lock_outline_rounded,
-                  obscure: _obscureConfirm,
-                  toggleObscure: () =>
-                      setState(() => _obscureConfirm = !_obscureConfirm),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (v != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
                     return null;
                   },
                 ),
@@ -314,28 +296,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     ),
                   )
                 : Text(
-                    'Hatch Your Dragon',
+                    'Login',
                     style: GoogleFonts.medievalSharp(
                       fontSize: 17,
                       letterSpacing: 1.2,
                       color: AppColors.onPrimary,
                     ),
                   ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Footer
-          Center(
-            child: Text(
-              'By registering you agree to the\nScrolls of Service and our Privacy Tome.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.rosarivo(
-                fontSize: 11,
-                color: AppColors.muted,
-                height: 1.5,
-              ),
-            ),
           ),
 
           const SizedBox(height: 32),
@@ -350,13 +317,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     required IconData icon,
     bool obscure = false,
     VoidCallback? toggleObscure,
-    TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
-      keyboardType: keyboardType,
       validator: validator,
       style: GoogleFonts.rosarivo(
         fontSize: 15,
@@ -421,5 +386,3 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     );
   }
 }
-
-

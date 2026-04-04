@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import 'registration_screen.dart';
+import 'login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -313,7 +314,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                             // Secondary — London Blue outline
                             OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
+                                  ),
+                                );
+                              },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.secondary,
                                 side: const BorderSide(
