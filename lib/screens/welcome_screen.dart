@@ -58,9 +58,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _entrySlide = Tween<Offset>(
       begin: const Offset(0, 0.06),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOut),
-    );
+    ).animate(CurvedAnimation(parent: _entryController, curve: Curves.easeOut));
   }
 
   @override
@@ -111,12 +109,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             // Tertiary pill badge
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 5),
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.tertiary.withValues(alpha: 0.18),
+                                color: AppColors.tertiary.withValues(
+                                  alpha: 0.18,
+                                ),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: AppColors.tertiary.withValues(alpha: 0.5),
+                                  color: AppColors.tertiary.withValues(
+                                    alpha: 0.5,
+                                  ),
                                 ),
                               ),
                               child: Text(
@@ -150,9 +154,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                     gradient: RadialGradient(
                                       colors: [
                                         AppColors.secondary.withOpacity(
-                                            0.14 * _glowAnimation.value),
+                                          0.14 * _glowAnimation.value,
+                                        ),
                                         AppColors.primary.withOpacity(
-                                            0.06 * _glowAnimation.value),
+                                          0.06 * _glowAnimation.value,
+                                        ),
                                         Colors.transparent,
                                       ],
                                     ),
@@ -182,14 +188,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.secondary
-                                              .withValues(alpha: 0.35),
+                                          color: AppColors.secondary.withValues(
+                                            alpha: 0.35,
+                                          ),
                                           blurRadius: 48,
                                           spreadRadius: 8,
                                         ),
                                         BoxShadow(
-                                          color: AppColors.primary
-                                              .withValues(alpha: 0.2),
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           blurRadius: 24,
                                           spreadRadius: 0,
                                           offset: const Offset(0, 12),
@@ -224,7 +232,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 // Subline (Rosarivo italic — accent teal)
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 40),
+                                    horizontal: 40,
+                                  ),
                                   child: Text(
                                     'A loyal dragon grows with every\npage you devour.',
                                     textAlign: TextAlign.center,
@@ -291,14 +300,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: AppColors.onPrimary,
-                                minimumSize:
-                                    const Size(double.infinity, 56),
+                                minimumSize: const Size(double.infinity, 56),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 elevation: 8,
-                                shadowColor:
-                                    AppColors.primary.withValues(alpha: 0.5),
+                                shadowColor: AppColors.primary.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
                               child: Text(
                                 'Begin Your Legend',
@@ -325,9 +334,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.secondary,
                                 side: const BorderSide(
-                                    color: AppColors.secondary, width: 1.5),
-                                minimumSize:
-                                    const Size(double.infinity, 52),
+                                  color: AppColors.secondary,
+                                  width: 1.5,
+                                ),
+                                minimumSize: const Size(double.infinity, 52),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
@@ -379,18 +389,24 @@ class _StatsStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatItem(value: '12', label: 'Books Read', color: AppColors.primary),
           _VerticalDivider(),
-          _StatItem(value: '347', label: 'Pages Today', color: AppColors.secondary),
+          _StatItem(
+            value: '347',
+            label: 'Pages Today',
+            color: AppColors.secondary,
+          ),
           _VerticalDivider(),
-          _StatItem(value: 'Lvl 4', label: 'Dragon Rank', color: AppColors.tertiary),
+          _StatItem(
+            value: 'Lvl 4',
+            label: 'Dragon Rank',
+            color: AppColors.tertiary,
+          ),
         ],
       ),
     );
@@ -423,10 +439,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: GoogleFonts.rosarivo(
-            fontSize: 11,
-            color: AppColors.muted,
-          ),
+          style: GoogleFonts.rosarivo(fontSize: 11, color: AppColors.muted),
         ),
       ],
     );
@@ -513,10 +526,7 @@ class _FeatureCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            data.color.withValues(alpha: 0.12),
-            AppColors.surface,
-          ],
+          colors: [data.color.withValues(alpha: 0.12), AppColors.surface],
         ),
       ),
       child: Column(
@@ -639,7 +649,8 @@ class _CurrentReadCard extends StatelessWidget {
                         value: 0.62,
                         backgroundColor: AppColors.surfaceVariant,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.secondary),
+                          AppColors.secondary,
+                        ),
                         minHeight: 6,
                       ),
                     ),
@@ -740,10 +751,14 @@ class _ParticlePainter extends CustomPainter {
       final color = colorIdx == 0
           ? AppColors.secondary.withValues(alpha: opacity)
           : colorIdx == 1
-              ? AppColors.primary.withValues(alpha: opacity * 0.65)
-              : AppColors.shimmer.withValues(alpha: opacity * 0.55);
+          ? AppColors.primary.withValues(alpha: opacity * 0.65)
+          : AppColors.shimmer.withValues(alpha: opacity * 0.55);
 
-      canvas.drawCircle(Offset(baseX, baseY - dy), radius, Paint()..color = color);
+      canvas.drawCircle(
+        Offset(baseX, baseY - dy),
+        radius,
+        Paint()..color = color,
+      );
     }
   }
 

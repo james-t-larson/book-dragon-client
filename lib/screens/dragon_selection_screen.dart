@@ -10,7 +10,11 @@ import 'home_screen.dart';
 class DragonSelectionScreen extends StatefulWidget {
   final String token;
   final User user;
-  const DragonSelectionScreen({super.key, required this.token, required this.user});
+  const DragonSelectionScreen({
+    super.key,
+    required this.token,
+    required this.user,
+  });
 
   @override
   State<DragonSelectionScreen> createState() => _DragonSelectionScreenState();
@@ -24,10 +28,20 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
   static const List<_DragonSlide> _dragons = [
     _DragonSlide('dragon_red.png', 'Red Dragon', 'red', Color(0xFFCC3333)),
     _DragonSlide('dragon_blue.png', 'Blue Dragon', 'blue', Color(0xFF3388CC)),
-    _DragonSlide('dragon_green.png', 'Green Dragon', 'green', Color(0xFF408000)),
+    _DragonSlide(
+      'dragon_green.png',
+      'Green Dragon',
+      'green',
+      Color(0xFF408000),
+    ),
     _DragonSlide('dragon_gold.png', 'Gold Dragon', 'gold', Color(0xFFD4AF37)),
     _DragonSlide('dragon_pink.png', 'Pink Dragon', 'pink', Color(0xFFCC6699)),
-    _DragonSlide('dragon_purple.png', 'Purple Dragon', 'purple', Color(0xFF8844AA)),
+    _DragonSlide(
+      'dragon_purple.png',
+      'Purple Dragon',
+      'purple',
+      Color(0xFF8844AA),
+    ),
     _DragonSlide('dragon_teal.png', 'Teal Dragon', 'teal', Color(0xFF008080)),
   ];
 
@@ -49,10 +63,7 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
           'Accept': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
         },
-        body: jsonEncode({
-          'color': dragon.colorName,
-          'name': dragon.name,
-        }),
+        body: jsonEncode({'color': dragon.colorName, 'name': dragon.name}),
       );
 
       if (!mounted) return;
@@ -61,10 +72,7 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => HomeScreen(
-              user: widget.user,
-              token: widget.token,
-            ),
+            builder: (_) => HomeScreen(user: widget.user, token: widget.token),
           ),
           (_) => false,
         );
@@ -145,17 +153,17 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
                         builder: (context, child) {
                           double value = 1.0;
                           if (_pageController.position.haveDimensions) {
-                            value = (_pageController.page! - index).abs().clamp(0.0, 1.0);
+                            value = (_pageController.page! - index).abs().clamp(
+                              0.0,
+                              1.0,
+                            );
                           }
                           final scale = 1.0 - (value * 0.15);
                           final opacity = 1.0 - (value * 0.4);
 
                           return Transform.scale(
                             scale: scale,
-                            child: Opacity(
-                              opacity: opacity,
-                              child: child,
-                            ),
+                            child: Opacity(opacity: opacity, child: child),
                           );
                         },
                         child: _DragonCard(dragon: _dragons[index]),
@@ -176,7 +184,9 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
                         icon: const Icon(Icons.chevron_left_rounded, size: 36),
                         color: AppColors.onBackground,
                         style: IconButton.styleFrom(
-                          backgroundColor: AppColors.surface.withValues(alpha: 0.85),
+                          backgroundColor: AppColors.surface.withValues(
+                            alpha: 0.85,
+                          ),
                           shape: const CircleBorder(),
                         ),
                       ),
@@ -196,7 +206,9 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
                         icon: const Icon(Icons.chevron_right_rounded, size: 36),
                         color: AppColors.onBackground,
                         style: IconButton.styleFrom(
-                          backgroundColor: AppColors.surface.withValues(alpha: 0.85),
+                          backgroundColor: AppColors.surface.withValues(
+                            alpha: 0.85,
+                          ),
                           shape: const CircleBorder(),
                         ),
                       ),
@@ -237,13 +249,16 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _dragons[_currentPage].color,
                   foregroundColor: AppColors.onPrimary,
-                  disabledBackgroundColor: _dragons[_currentPage].color.withValues(alpha: 0.5),
+                  disabledBackgroundColor: _dragons[_currentPage].color
+                      .withValues(alpha: 0.5),
                   minimumSize: const Size(double.infinity, 58),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 10,
-                  shadowColor: _dragons[_currentPage].color.withValues(alpha: 0.5),
+                  shadowColor: _dragons[_currentPage].color.withValues(
+                    alpha: 0.5,
+                  ),
                 ),
                 child: _isSubmitting
                     ? const SizedBox(

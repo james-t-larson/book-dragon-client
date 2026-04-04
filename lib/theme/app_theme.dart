@@ -129,9 +129,7 @@ class AppTheme {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.onPrimary,
         minimumSize: const Size(double.infinity, 54),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 4,
         shadowColor: AppColors.primaryDark.withValues(alpha: 0.6),
         textStyle: GoogleFonts.medievalSharp(
@@ -149,9 +147,7 @@ class AppTheme {
         foregroundColor: AppColors.secondary,
         side: const BorderSide(color: AppColors.secondary, width: 1.5),
         minimumSize: const Size(double.infinity, 54),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: GoogleFonts.rosarivo(
           fontSize: 15,
           fontWeight: FontWeight.w400,

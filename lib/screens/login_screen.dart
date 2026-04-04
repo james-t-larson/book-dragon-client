@@ -48,9 +48,7 @@ class _LoginScreenState extends State<LoginScreen>
     _entrySlide = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOut),
-    );
+    ).animate(CurvedAnimation(parent: _entryController, curve: Curves.easeOut));
   }
 
   @override
@@ -87,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final authResponse = AuthResponse.fromJson(body);
-        
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', authResponse.token);
 
@@ -128,7 +126,6 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           );
         }
-
       } else {
         final body = jsonDecode(response.body);
         setState(() {
@@ -152,10 +149,7 @@ class _LoginScreenState extends State<LoginScreen>
       body: SafeArea(
         child: FadeTransition(
           opacity: _entryFade,
-          child: SlideTransition(
-            position: _entrySlide,
-            child: _buildForm(),
-          ),
+          child: SlideTransition(position: _entrySlide, child: _buildForm()),
         ),
       ),
     );
@@ -223,8 +217,11 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline_rounded,
-                      color: AppColors.primaryLight, size: 20),
+                  Icon(
+                    Icons.error_outline_rounded,
+                    color: AppColors.primaryLight,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -327,10 +324,7 @@ class _LoginScreenState extends State<LoginScreen>
       controller: controller,
       obscureText: obscure,
       validator: validator,
-      style: GoogleFonts.rosarivo(
-        fontSize: 15,
-        color: AppColors.onBackground,
-      ),
+      style: GoogleFonts.rosarivo(fontSize: 15, color: AppColors.onBackground),
       cursorColor: AppColors.secondary,
       decoration: InputDecoration(
         labelText: label,
@@ -354,8 +348,10 @@ class _LoginScreenState extends State<LoginScreen>
             : null,
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 18,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
@@ -364,10 +360,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.secondary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

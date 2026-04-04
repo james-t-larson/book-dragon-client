@@ -53,20 +53,14 @@ class _SplashScreenState extends State<SplashScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => DragonSelectionScreen(
-                user: user,
-                token: token,
-              ),
+              builder: (_) => DragonSelectionScreen(user: user, token: token),
             ),
           );
         } else {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => HomeScreen(
-                user: user,
-                token: token,
-              ),
+              builder: (_) => HomeScreen(user: user, token: token),
             ),
           );
         }
@@ -93,11 +87,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: AppColors.background,
-      body: Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primary,
-        ),
-      ),
+      body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
     );
   }
 }

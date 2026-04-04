@@ -51,9 +51,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     _entrySlide = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOut),
-    );
+    ).animate(CurvedAnimation(parent: _entryController, curve: Curves.easeOut));
   }
 
   @override
@@ -109,7 +107,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       } else {
         final body = jsonDecode(response.body);
         setState(() {
-          _errorMessage = body['error'] ?? 'Registration failed. Please try again.';
+          _errorMessage =
+              body['error'] ?? 'Registration failed. Please try again.';
           _isLoading = false;
         });
       }
@@ -129,10 +128,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       body: SafeArea(
         child: FadeTransition(
           opacity: _entryFade,
-          child: SlideTransition(
-            position: _entrySlide,
-            child: _buildForm(),
-          ),
+          child: SlideTransition(position: _entrySlide, child: _buildForm()),
         ),
       ),
     );
@@ -200,8 +196,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline_rounded,
-                      color: AppColors.primaryLight, size: 20),
+                  Icon(
+                    Icons.error_outline_rounded,
+                    color: AppColors.primaryLight,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -244,9 +243,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   icon: Icons.mail_outline_rounded,
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
-                    final emailRegex =
-                        RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                    if (v == null || v.trim().isEmpty)
+                      return 'Email is required';
+                    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
                     if (!emailRegex.hasMatch(v.trim())) {
                       return 'Enter a valid email address';
                     }
@@ -363,10 +362,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       obscureText: obscure,
       keyboardType: keyboardType,
       validator: validator,
-      style: GoogleFonts.rosarivo(
-        fontSize: 15,
-        color: AppColors.onBackground,
-      ),
+      style: GoogleFonts.rosarivo(fontSize: 15, color: AppColors.onBackground),
       cursorColor: AppColors.secondary,
       decoration: InputDecoration(
         labelText: label,
@@ -390,8 +386,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             : null,
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 18,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
@@ -400,10 +398,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.secondary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -426,5 +421,3 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     );
   }
 }
-
-
