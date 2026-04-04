@@ -1,289 +1,144 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
+import '../models/book.dart';
+import 'focus_timer_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   final User user;
   final String token;
 
   const HomeScreen({super.key, required this.user, required this.token});
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  Timer? _timer;
-  int _selectedMinutes = 15;
-  int _remainingSeconds = 0;
-  bool _isRunning = false;
-  late int _currentCoins;
-
-  final List<int> _presetMinutes = [5, 15, 30, 45, 60];
-  final TextEditingController _customTimeController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _currentCoins = widget.user.coins;
-    _remainingSeconds = _selectedMinutes * 60;
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
-    _customTimeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if ((state == AppLifecycleState.paused ||
-            state == AppLifecycleState.inactive) &&
-        _isRunning) {
-      _cancelTimer(lostFocus: true);
-    }
-  }
-
-  Future<void> _startTimer() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hideWarning = prefs.getBool('hide_focus_loss_warning') ?? false;
-
-    if (!hideWarning && mounted) {
-      final shouldStart = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          bool dontShowAgain = false;
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                backgroundColor: AppColors.surface,
-                title: Text(
-                  'Focus Warning',
-                  style: GoogleFonts.medievalSharp(color: AppColors.onSurface),
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'If you leave the page for any reason, the timer will stop and any coins will be lost.',
-                      style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: dontShowAgain,
-                          onChanged: (value) {
-                            setState(() {
-                              dontShowAgain = value ?? false;
-                            });
-                          },
-                          activeColor: _dragonThemeColor,
-                        ),
-                        Expanded(
-                          child: Text(
-                            'Do not remind me again',
-                            style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.rosarivo(color: AppColors.secondaryLight),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (dontShowAgain) {
-                        await prefs.setBool('hide_focus_loss_warning', true);
-                      }
-                      if (context.mounted) {
-                        Navigator.of(context).pop(true);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _dragonThemeColor,
-                    ),
-                    child: Text(
-                      'Start Timer',
-                      style: GoogleFonts.medievalSharp(color: AppColors.onPrimary),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-
-      if (shouldStart != true) {
-        return;
-      }
-    }
-
-    setState(() {
-      _remainingSeconds = _selectedMinutes * 60;
-      _isRunning = true;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        _completeTimer();
-      }
-    });
-  }
-
-  void _cancelTimer({bool lostFocus = false}) {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-      _remainingSeconds = _selectedMinutes * 60;
-    });
-
-    if (lostFocus && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'The dragon vanished! You lost focus and your progress was reset.',
-            style: GoogleFonts.rosarivo(color: AppColors.onPrimary),
-          ),
-          backgroundColor: AppColors.primary,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    }
-  }
-
-  Future<void> _completeTimer() async {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/focus_timer_complete'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-        body: jsonEncode({
-          'book_id': 0,
-          'minutes': _selectedMinutes,
-          'pages_read': 0,
-        }),
-      );
-
-      if (response.statusCode == 200 && mounted) {
-        final data = jsonDecode(response.body);
-        final coinsEarned = data['coins_earned'];
-        final totalCoins = data['total_coins'];
-
-        setState(() {
-          _currentCoins = totalCoins;
-          _remainingSeconds = _selectedMinutes * 60;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Focus complete! You earned $coinsEarned coins!',
-              style: GoogleFonts.rosarivo(color: AppColors.onPrimary),
-            ),
-            backgroundColor: AppColors.tertiary,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      } else if (mounted) {
-        _showError('Failed to complete focus session. Please try again.');
-        setState(() {
-          _remainingSeconds = _selectedMinutes * 60;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError('Network error occurred.');
-        setState(() {
-          _remainingSeconds = _selectedMinutes * 60;
-        });
-      }
-    }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.rosarivo(color: AppColors.onPrimary),
-        ),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+  Color _getColorFromTitle(String title) {
+    final hash = title.hashCode;
+    final r = (hash & 0xFF0000) >> 16;
+    final g = (hash & 0x00FF00) >> 8;
+    final b = (hash & 0x0000FF);
+    // Darken colors slightly so text is readable
+    return Color.fromARGB(255, r % 200 + 55, g % 200 + 55, b % 200 + 55);
   }
 
   String get _dragonAsset {
-    final color = widget.user.dragonColor?.toLowerCase();
+    final color = user.dragonColor?.toLowerCase();
     if (color != null && color.isNotEmpty) {
       return 'assets/images/dragon_$color.png';
     }
     return 'assets/images/dragon_mascot.png';
   }
 
-  Color get _dragonThemeColor {
-    final color = widget.user.dragonColor?.toLowerCase();
-    switch (color) {
-      case 'red':
-        return const Color(0xFFCC3333);
-      case 'blue':
-        return const Color(0xFF3388CC);
-      case 'green':
-        return const Color(0xFF408000);
-      case 'gold':
-        return const Color(0xFFD4AF37);
-      case 'pink':
-        return const Color(0xFFCC6699);
-      case 'purple':
-        return const Color(0xFF8844AA);
-      case 'teal':
-        return const Color(0xFF008080);
-      default:
-        return AppColors.tertiary; // fallback green
-    }
+  Widget _buildBookSpine(Book book) {
+    final color = _getColorFromTitle(book.title);
+    return Container(
+      width: 40,
+      height: 120,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(4),
+        ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black45, blurRadius: 2, offset: Offset(1, 0)),
+        ],
+        border: Border.all(color: Colors.black26, width: 1),
+      ),
+      child: Center(
+        child: RotatedBox(
+          quarterTurns: 3,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Text(
+              book.title,
+              style: GoogleFonts.medievalSharp(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                shadows: const [Shadow(color: Colors.black87, blurRadius: 1)],
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  String _formatTime(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
+  Widget _buildShelf(List<Book> shelfBooks) {
+    return Container(
+      height: 160,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFF3E2723), // Dark brown wood background behind shelves
+      ),
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          // Shelf Wood Base
+          Container(
+            height: 20,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFF5D4037),
+              border: Border(
+                top: BorderSide(color: Color(0xFF795548), width: 2),
+                bottom: BorderSide(color: Color(0xFF3E2723), width: 4),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black54,
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+          ),
+          // Books
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: shelfBooks.map((b) => _buildBookSpine(b)).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyShelf() {
+    return _buildShelf([]);
   }
 
   @override
   Widget build(BuildContext context) {
+    final books = user.books;
+    List<Widget> shelves = [];
+
+    if (books.isEmpty) {
+      shelves = [_buildEmptyShelf(), _buildEmptyShelf(), _buildEmptyShelf()];
+    } else {
+      // Split books into chunks of 6 (assuming 6 books per shelf roughly fits normal screen)
+      for (int i = 0; i < books.length; i += 6) {
+        int end = (i + 6 < books.length) ? i + 6 : books.length;
+        shelves.add(_buildShelf(books.sublist(i, end)));
+      }
+      // Ensure at least 3 shelves are drawn for aesthetic
+      while (shelves.length < 3) {
+        shelves.add(_buildEmptyShelf());
+      }
+    }
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF2E1C15), // Very dark wood/stone color
       appBar: AppBar(
         title: Text(
-          'Focus Timer',
+          'Library',
           style: GoogleFonts.medievalSharp(color: AppColors.onBackground),
         ),
         backgroundColor: Colors.transparent,
@@ -293,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Center(
               child: Text(
-                'Coins: $_currentCoins',
+                'Coins: ${user.coins}',
                 style: GoogleFonts.rosarivo(
                   color: AppColors.shimmer,
                   fontWeight: FontWeight.bold,
@@ -304,179 +159,72 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 16),
+      body: Stack(
+        children: [
+          // Shelves
+          ListView(
+            padding: const EdgeInsets.only(bottom: 100),
+            children: shelves,
+          ),
 
-                // Hero Banner
-                Center(
-                  child: Image.asset(
-                    _dragonAsset,
-                    height: 200,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/images/dragon_mascot.png',
-                      height: 200,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Countdown Display
-                Center(
-                  child: Text(
-                    _formatTime(_remainingSeconds),
-                    style: GoogleFonts.medievalSharp(
-                      fontSize: 80,
-                      fontWeight: FontWeight.bold,
-                      color: _isRunning
-                          ? _dragonThemeColor
-                          : AppColors.onBackground,
-                      shadows: [
-                        Shadow(
-                          color: AppColors.primaryDark.withValues(alpha: 0.5),
-                          offset: const Offset(2, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Time Selector (only show if not running)
-                if (!_isRunning) ...[
-                  Text(
-                    'Select Duration',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.rosarivo(
-                      fontSize: 18,
-                      color: AppColors.secondaryLight,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _presetMinutes
-                        .map(
-                          (mins) => ChoiceChip(
-                            label: Text(
-                              '$mins m',
-                              style: GoogleFonts.rosarivo(),
-                            ),
-                            selected: _selectedMinutes == mins,
-                            selectedColor: _dragonThemeColor,
-                            backgroundColor: AppColors.surface,
-                            labelStyle: TextStyle(
-                              color: _selectedMinutes == mins
-                                  ? AppColors.onPrimary
-                                  : AppColors.onSurface,
-                            ),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setState(() {
-                                  _selectedMinutes = mins;
-                                  _remainingSeconds = mins * 60;
-                                  _customTimeController.clear();
-                                });
-                              }
-                            },
-                          ),
-                        )
-                        .toList(),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Custom time input
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 120,
-                        child: TextField(
-                          controller: _customTimeController,
-                          keyboardType: TextInputType.number,
-                          style: GoogleFonts.rosarivo(
-                            color: AppColors.onSurface,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Custom',
-                            hintStyle: GoogleFonts.rosarivo(
-                              color: AppColors.muted,
-                            ),
-                            suffixText: 'm',
-                            suffixStyle: GoogleFonts.rosarivo(
-                              color: AppColors.onSurface,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          onChanged: (val) {
-                            final customVal = int.tryParse(val);
-                            if (customVal != null && customVal > 0) {
-                              setState(() {
-                                _selectedMinutes = customVal;
-                                _remainingSeconds = customVal * 60;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
-                if (_isRunning)
-                  const SizedBox(
-                    height: 180,
-                  ), // Pad space when hiding selectors
-
-                const SizedBox(height: 48),
-
-                // Giant Action Button
-                ElevatedButton(
-                  onPressed: _isRunning ? () => _cancelTimer() : _startTimer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isRunning
-                        ? AppColors.primary
-                        : _dragonThemeColor,
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 8,
-                  ),
-                  child: Text(
-                    _isRunning ? 'Surrender' : 'Start Focus',
-                    style: GoogleFonts.medievalSharp(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
+          // Dragon in the center
+          Center(
+            child: IgnorePointer(
+              child: Image.asset(
+                _dragonAsset,
+                height: 250,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) =>
+                    Image.asset('assets/images/dragon_mascot.png', height: 250),
+              ),
             ),
           ),
-        ),
+
+          // Play button
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          FocusTimerScreen(user: user, token: token),
+                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.play_arrow,
+                  size: 32,
+                  color: AppColors.onPrimary,
+                ),
+                label: Text(
+                  'Focus Time',
+                  style: GoogleFonts.medievalSharp(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onPrimary,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 8,
+                  shadowColor: Colors.black,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
