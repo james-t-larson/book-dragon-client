@@ -19,7 +19,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _entryController.dispose();
     super.dispose();
@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen>
           'Accept': 'application/json',
         },
         body: jsonEncode({
-          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
           'password': _passwordController.text,
         }),
       );
@@ -246,12 +246,12 @@ class _LoginScreenState extends State<LoginScreen>
             child: Column(
               children: [
                 _buildField(
-                  controller: _usernameController,
-                  label: 'Username',
-                  icon: Icons.person_outline_rounded,
+                  controller: _emailController,
+                  label: 'Email',
+                  icon: Icons.email_outlined,
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'Username is required';
+                      return 'Email is required';
                     }
                     return null;
                   },
