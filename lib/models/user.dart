@@ -19,6 +19,28 @@ class User {
     this.dragonColor,
   });
 
+  User copyWith({
+    int? id,
+    String? username,
+    String? email,
+    DateTime? createdAt,
+    int? coins,
+    int? dragonId,
+    String? dragonName,
+    String? dragonColor,
+  }) {
+    return User(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      createdAt: createdAt ?? this.createdAt,
+      coins: coins ?? this.coins,
+      dragonId: dragonId ?? this.dragonId,
+      dragonName: dragonName ?? this.dragonName,
+      dragonColor: dragonColor ?? this.dragonColor,
+    );
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],

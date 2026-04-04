@@ -166,6 +166,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return 'assets/images/dragon_mascot.png';
   }
 
+  Color get _dragonThemeColor {
+    final color = widget.user.dragonColor?.toLowerCase();
+    switch (color) {
+      case 'red':
+        return const Color(0xFFCC3333);
+      case 'blue':
+        return const Color(0xFF3388CC);
+      case 'green':
+        return const Color(0xFF408000);
+      case 'gold':
+        return const Color(0xFFD4AF37);
+      case 'pink':
+        return const Color(0xFFCC6699);
+      case 'purple':
+        return const Color(0xFF8844AA);
+      case 'teal':
+        return const Color(0xFF008080);
+      default:
+        return AppColors.tertiary; // fallback green
+    }
+  }
+
   String _formatTime(int seconds) {
     final m = (seconds ~/ 60).toString().padLeft(2, '0');
     final s = (seconds % 60).toString().padLeft(2, '0');
@@ -231,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       fontSize: 80,
                       fontWeight: FontWeight.bold,
                       color: _isRunning
-                          ? AppColors.tertiaryLight
+                          ? _dragonThemeColor
                           : AppColors.onBackground,
                       shadows: [
                         Shadow(
@@ -269,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               style: GoogleFonts.rosarivo(),
                             ),
                             selected: _selectedMinutes == mins,
-                            selectedColor: AppColors.secondary,
+                            selectedColor: _dragonThemeColor,
                             backgroundColor: AppColors.surface,
                             labelStyle: TextStyle(
                               color: _selectedMinutes == mins
@@ -351,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _isRunning
                         ? AppColors.primary
-                        : AppColors.tertiary,
+                        : _dragonThemeColor,
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),

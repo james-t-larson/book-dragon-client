@@ -69,10 +69,14 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 201) {
+        final updatedUser = widget.user.copyWith(
+          dragonColor: dragon.colorName,
+          dragonName: dragon.name,
+        );
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => HomeScreen(user: widget.user, token: widget.token),
+            builder: (_) => HomeScreen(user: updatedUser, token: widget.token),
           ),
           (_) => false,
         );
