@@ -4,6 +4,9 @@ class User {
   final String email;
   final DateTime createdAt;
   final int coins;
+  final int? dragonId;
+  final String? dragonName;
+  final String? dragonColor;
 
   User({
     required this.id,
@@ -11,6 +14,9 @@ class User {
     required this.email,
     required this.createdAt,
     required this.coins,
+    this.dragonId,
+    this.dragonName,
+    this.dragonColor,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -20,6 +26,9 @@ class User {
       email: json['email'],
       createdAt: DateTime.parse(json['created_at']),
       coins: json['coins'] ?? 0,
+      dragonId: json['dragon_id'],
+      dragonName: json['dragon_name'],
+      dragonColor: json['dragon_color'],
     );
   }
 
@@ -30,6 +39,9 @@ class User {
       'email': email,
       'created_at': createdAt.toIso8601String(),
       'coins': coins,
+      if (dragonId != null) 'dragon_id': dragonId,
+      if (dragonName != null) 'dragon_name': dragonName,
+      if (dragonColor != null) 'dragon_color': dragonColor,
     };
   }
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
@@ -92,6 +93,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       if (response.statusCode == 201) {
         final body = jsonDecode(response.body);
         final authResponse = AuthResponse.fromJson(body);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', authResponse.token);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

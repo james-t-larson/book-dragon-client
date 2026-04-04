@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
@@ -87,6 +88,9 @@ class _LoginScreenState extends State<LoginScreen>
         final body = jsonDecode(response.body);
         final authResponse = AuthResponse.fromJson(body);
         
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', authResponse.token);
+
         final dragonResponse = await http.get(
           Uri.parse('${ApiConfig.baseUrl}/dragon'),
           headers: {
