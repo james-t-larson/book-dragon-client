@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
@@ -52,7 +53,89 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _startTimer() {
+  Future<void> _startTimer() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hideWarning = prefs.getBool('hide_focus_loss_warning') ?? false;
+
+    if (!hideWarning && mounted) {
+      final shouldStart = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          bool dontShowAgain = false;
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                backgroundColor: AppColors.surface,
+                title: Text(
+                  'Focus Warning',
+                  style: GoogleFonts.medievalSharp(color: AppColors.onSurface),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'If you leave the page for any reason, the timer will stop and any coins will be lost.',
+                      style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: dontShowAgain,
+                          onChanged: (value) {
+                            setState(() {
+                              dontShowAgain = value ?? false;
+                            });
+                          },
+                          activeColor: _dragonThemeColor,
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Do not remind me again',
+                            style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.rosarivo(color: AppColors.secondaryLight),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (dontShowAgain) {
+                        await prefs.setBool('hide_focus_loss_warning', true);
+                      }
+                      if (context.mounted) {
+                        Navigator.of(context).pop(true);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _dragonThemeColor,
+                    ),
+                    child: Text(
+                      'Start Timer',
+                      style: GoogleFonts.medievalSharp(color: AppColors.onPrimary),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      if (shouldStart != true) {
+        return;
+      }
+    }
+
     setState(() {
       _remainingSeconds = _selectedMinutes * 60;
       _isRunning = true;
