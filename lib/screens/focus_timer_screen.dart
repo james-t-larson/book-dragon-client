@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
+import '../widgets/sleeping_dragon_window.dart';
 
 class FocusTimerScreen extends StatefulWidget {
   final User user;
@@ -248,13 +249,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     );
   }
 
-  String get _dragonAsset {
-    final color = widget.user.dragonColor?.toLowerCase();
-    if (color != null && color.isNotEmpty) {
-      return 'assets/images/dragon_$color.png';
-    }
-    return 'assets/images/dragon_mascot.png';
-  }
+
 
   Color get _dragonThemeColor {
     final color = widget.user.dragonColor?.toLowerCase();
@@ -322,14 +317,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
 
                 // Hero Banner
                 Center(
-                  child: Image.asset(
-                    _dragonAsset,
-                    height: 200,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/images/dragon_mascot.png',
-                      height: 200,
-                    ),
+                  child: SleepingDragonWindow(
+                    colorName: widget.user.dragonColor,
                   ),
                 ),
 
