@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../models/book.dart';
+import '../widgets/dragon_art.dart';
+import '../widgets/book_stack.dart';
 import 'focus_timer_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -20,13 +22,7 @@ class HomeScreen extends StatelessWidget {
     return Color.fromARGB(255, r % 200 + 55, g % 200 + 55, b % 200 + 55);
   }
 
-  String get _dragonAsset {
-    final color = user.dragonColor?.toLowerCase();
-    if (color != null && color.isNotEmpty) {
-      return 'assets/images/dragon_$color.png';
-    }
-    return 'assets/images/dragon_mascot.png';
-  }
+
 
   Widget _buildBookSpine(Book book) {
     final color = _getColorFromTitle(book.title);
@@ -167,15 +163,26 @@ class HomeScreen extends StatelessWidget {
             children: shelves,
           ),
 
-          // Dragon in the center
-          Center(
+          // Dragon and Books in the center
+          Align(
+            alignment: const Alignment(0, 0.2), // Slightly lower down
             child: IgnorePointer(
-              child: Image.asset(
-                _dragonAsset,
-                height: 250,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
-                    Image.asset('assets/images/dragon_mascot.png', height: 250),
+              child: SizedBox(
+                height: 350,
+                width: 360,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    const Positioned(
+                      bottom: 0,
+                      child: MessyBookStack(),
+                    ),
+                    Positioned(
+                      bottom: 48, // Sit well into the stack of books
+                      child: DragonArt(colorName: user.dragonColor),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
