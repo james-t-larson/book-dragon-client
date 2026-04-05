@@ -249,8 +249,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     );
   }
 
-
-
   Color get _dragonThemeColor {
     final color = widget.user.dragonColor?.toLowerCase();
     switch (color) {
@@ -283,6 +281,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
           'Focus Timer',
@@ -306,172 +305,189 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 16),
-
-                // Hero Banner
-                Center(
-                  child: SleepingDragonWindow(
-                    colorName: widget.user.dragonColor,
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Countdown Display
-                Center(
-                  child: Text(
-                    _formatTime(_remainingSeconds),
-                    style: GoogleFonts.medievalSharp(
-                      fontSize: 80,
-                      fontWeight: FontWeight.bold,
-                      color: _isRunning
-                          ? _dragonThemeColor
-                          : AppColors.onBackground,
-                      shadows: [
-                        Shadow(
-                          color: AppColors.primaryDark.withValues(alpha: 0.5),
-                          offset: const Offset(2, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Time Selector (only show if not running)
-                if (!_isRunning) ...[
-                  Text(
-                    'Select Duration',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.rosarivo(
-                      fontSize: 18,
-                      color: AppColors.secondaryLight,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _presetMinutes
-                        .map(
-                          (mins) => ChoiceChip(
-                            label: Text(
-                              '$mins m',
-                              style: GoogleFonts.rosarivo(),
-                            ),
-                            selected: _selectedMinutes == mins,
-                            selectedColor: _dragonThemeColor,
-                            backgroundColor: AppColors.surface,
-                            labelStyle: TextStyle(
-                              color: _selectedMinutes == mins
-                                  ? AppColors.onPrimary
-                                  : AppColors.onSurface,
-                            ),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setState(() {
-                                  _selectedMinutes = mins;
-                                  _remainingSeconds = mins * 60;
-                                  _customTimeController.clear();
-                                });
-                              }
-                            },
-                          ),
-                        )
-                        .toList(),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Custom time input
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      body: SizedBox.expand(
+        child: Stack(
+          children: [
+            // Reading Nook Background Image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/rooms/reading-nook.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(
-                        width: 120,
-                        child: TextField(
-                          controller: _customTimeController,
-                          keyboardType: TextInputType.number,
-                          style: GoogleFonts.rosarivo(
-                            color: AppColors.onSurface,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Custom',
-                            hintStyle: GoogleFonts.rosarivo(
-                              color: AppColors.muted,
-                            ),
-                            suffixText: 'm',
-                            suffixStyle: GoogleFonts.rosarivo(
-                              color: AppColors.onSurface,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          onChanged: (val) {
-                            final customVal = int.tryParse(val);
-                            if (customVal != null && customVal > 0) {
-                              setState(() {
-                                _selectedMinutes = customVal;
-                                _remainingSeconds = customVal * 60;
-                              });
-                            }
-                          },
+                      const SizedBox(height: 16),
+
+                      // Hero Banner
+                      Center(
+                        child: SleepingDragonWindow(
+                          colorName: widget.user.dragonColor,
                         ),
                       ),
+
+                      const SizedBox(height: 32),
+
+                      // Countdown Display
+                      Center(
+                        child: Text(
+                          _formatTime(_remainingSeconds),
+                          style: GoogleFonts.medievalSharp(
+                            fontSize: 80,
+                            fontWeight: FontWeight.bold,
+                            color: _isRunning
+                                ? _dragonThemeColor
+                                : AppColors.onBackground,
+                            shadows: [
+                              Shadow(
+                                color: AppColors.primaryDark.withValues(
+                                  alpha: 0.5,
+                                ),
+                                offset: const Offset(2, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Time Selector (only show if not running)
+                      if (!_isRunning) ...[
+                        Text(
+                          'Select Duration',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.rosarivo(
+                            fontSize: 18,
+                            color: AppColors.secondaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _presetMinutes
+                              .map(
+                                (mins) => ChoiceChip(
+                                  label: Text(
+                                    '$mins m',
+                                    style: GoogleFonts.rosarivo(),
+                                  ),
+                                  selected: _selectedMinutes == mins,
+                                  selectedColor: _dragonThemeColor,
+                                  backgroundColor: AppColors.surface,
+                                  labelStyle: TextStyle(
+                                    color: _selectedMinutes == mins
+                                        ? AppColors.onPrimary
+                                        : AppColors.onSurface,
+                                  ),
+                                  onSelected: (selected) {
+                                    if (selected) {
+                                      setState(() {
+                                        _selectedMinutes = mins;
+                                        _remainingSeconds = mins * 60;
+                                        _customTimeController.clear();
+                                      });
+                                    }
+                                  },
+                                ),
+                              )
+                              .toList(),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Custom time input
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 120,
+                              child: TextField(
+                                controller: _customTimeController,
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.rosarivo(
+                                  color: AppColors.onSurface,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Custom',
+                                  hintStyle: GoogleFonts.rosarivo(
+                                    color: AppColors.muted,
+                                  ),
+                                  suffixText: 'm',
+                                  suffixStyle: GoogleFonts.rosarivo(
+                                    color: AppColors.onSurface,
+                                  ),
+                                  filled: true,
+                                  fillColor: AppColors.surface,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  final customVal = int.tryParse(val);
+                                  if (customVal != null && customVal > 0) {
+                                    setState(() {
+                                      _selectedMinutes = customVal;
+                                      _remainingSeconds = customVal * 60;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      if (_isRunning)
+                        const SizedBox(
+                          height: 180,
+                        ), // Pad space when hiding selectors
+
+                      const SizedBox(height: 48),
+
+                      // Giant Action Button
+                      ElevatedButton(
+                        onPressed: _isRunning
+                            ? () => _cancelTimer()
+                            : _startTimer,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isRunning
+                              ? AppColors.primary
+                              : _dragonThemeColor,
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 8,
+                        ),
+                        child: Text(
+                          _isRunning ? 'Surrender' : 'Start Focus',
+                          style: GoogleFonts.medievalSharp(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                     ],
                   ),
-                ],
-
-                if (_isRunning)
-                  const SizedBox(
-                    height: 180,
-                  ), // Pad space when hiding selectors
-
-                const SizedBox(height: 48),
-
-                // Giant Action Button
-                ElevatedButton(
-                  onPressed: _isRunning ? () => _cancelTimer() : _startTimer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isRunning
-                        ? AppColors.primary
-                        : _dragonThemeColor,
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 8,
-                  ),
-                  child: Text(
-                    _isRunning ? 'Surrender' : 'Start Focus',
-                    style: GoogleFonts.medievalSharp(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
                 ),
-                const SizedBox(height: 32),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

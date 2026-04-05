@@ -44,14 +44,17 @@ class HomeScreen extends StatelessWidget {
           // Library Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/library.png',
+              'assets/images/rooms/library.png',
               fit: BoxFit.cover,
             ),
           ),
 
           // Dragon on Table
           Align(
-            alignment: const Alignment(0, 0.4), // Positioned roughly on the table
+            alignment: const Alignment(
+              0,
+              0.4,
+            ), // Positioned roughly on the table
             child: IgnorePointer(
               child: SizedBox(
                 height: 350,
