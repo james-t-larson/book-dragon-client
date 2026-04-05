@@ -37,15 +37,9 @@ class DragonArt extends StatelessWidget {
     <!-- Wings behind -->
     <!-- Left Bat Wing -->
     <path d="M 80 90 L -10 10 Q 20 40 5 60 Q 25 80 20 110 Q 50 120 65 110 Z" fill="$darkHex" />
-    <path d="M 80 90 L -10 10" stroke="$lightHex" stroke-width="2" fill="none" />
-    <path d="M -10 10 Q 5 35 5 60" stroke="$lightHex" stroke-width="2" fill="none" />
-    <path d="M -10 10 Q 10 60 20 110" stroke="$lightHex" stroke-width="2" fill="none" />
 
     <!-- Right Bat Wing -->
     <path d="M 120 90 L 210 10 Q 180 40 195 60 Q 175 80 180 110 Q 150 120 135 110 Z" fill="$darkHex" />
-    <path d="M 120 90 L 210 10" stroke="$lightHex" stroke-width="2" fill="none" />
-    <path d="M 210 10 Q 195 35 195 60" stroke="$lightHex" stroke-width="2" fill="none" />
-    <path d="M 210 10 Q 190 60 180 110" stroke="$lightHex" stroke-width="2" fill="none" />
 
     <!-- Body -->
     <rect x="65" y="80" width="70" height="95" rx="35" fill="$baseHex" />
@@ -82,7 +76,7 @@ class DragonArt extends StatelessWidget {
     <path d="M 130 40 L 170 10 Q 150 30 135 55 Z" fill="#E8DCC4" />
 
     <!-- Head Spikes -->
-    <path d="M 100 25 L 90 5 L 110 5 Z" fill="$lightHex" />
+    <path d="M 90 28 L 110 28 L 100 5 Z" fill="$lightHex" />
 
     <!-- Snout -->
     <ellipse cx="100" cy="85" rx="30" ry="18" fill="$lightHex" />
@@ -91,14 +85,14 @@ class DragonArt extends StatelessWidget {
     <circle cx="88" cy="85" r="4" fill="$darkHex" />
     <circle cx="112" cy="85" r="4" fill="$darkHex" />
 
-    <!-- Eyes -->
-    <circle cx="82" cy="55" r="10" fill="#ffffff" />
-    <circle cx="118" cy="55" r="10" fill="#ffffff" />
-    <circle cx="82" cy="55" r="5" fill="#000000" />
-    <circle cx="118" cy="55" r="5" fill="#000000" />
+    <!-- Eyes (Squinted, pointy ends) -->
+    <path d="M 72 55 Q 82 48 92 55 Q 82 62 72 55 Z" fill="#ffffff" />
+    <path d="M 108 55 Q 118 48 128 55 Q 118 62 108 55 Z" fill="#ffffff" />
+    <circle cx="82" cy="55" r="2.5" fill="#000000" />
+    <circle cx="118" cy="55" r="2.5" fill="#000000" />
     <!-- Sparkles -->
-    <circle cx="80" cy="53" r="2" fill="#ffffff" />
-    <circle cx="116" cy="53" r="2" fill="#ffffff" />
+    <circle cx="81" cy="54.5" r="1" fill="#ffffff" />
+    <circle cx="117" cy="54.5" r="1" fill="#ffffff" />
   </g>
 </svg>
 ''';
