@@ -23,9 +23,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late final Animation<double> _entryFade;
   late final Animation<Offset> _entrySlide;
 
+  late final String _dragonAsset;
+
   @override
   void initState() {
     super.initState();
+
+    final dragonColors = ['blue', 'gold', 'moss', 'pink', 'red', 'white'];
+    final randomIdx = math.Random().nextInt(dragonColors.length);
+    _dragonAsset =
+        'assets/images/dragons/Sleeping/${dragonColors[randomIdx]}.png';
 
     _floatController = AnimationController(
       vsync: this,
@@ -153,11 +160,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                     shape: BoxShape.circle,
                                     gradient: RadialGradient(
                                       colors: [
-                                        AppColors.secondary.withOpacity(
-                                          0.14 * _glowAnimation.value,
+                                        AppColors.secondary.withValues(
+                                          alpha: 0.14 * _glowAnimation.value,
                                         ),
-                                        AppColors.primary.withOpacity(
-                                          0.06 * _glowAnimation.value,
+                                        AppColors.primary.withValues(
+                                          alpha: 0.06 * _glowAnimation.value,
                                         ),
                                         Colors.transparent,
                                       ],
@@ -206,8 +213,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                     ),
                                     child: ClipOval(
                                       child: Image.asset(
-                                        'assets/images/dragon_mascot.png',
-                                        fit: BoxFit.cover,
+                                        _dragonAsset,
+                                        fit: BoxFit.contain,
                                       ),
                                     ),
                                   ),
