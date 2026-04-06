@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
-import '../widgets/sleeping_dragon_window.dart';
 
 class FocusTimerScreen extends StatefulWidget {
   final User user;
@@ -249,6 +248,27 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     );
   }
 
+  String? get _dragonSpritePath {
+    final color = widget.user.dragonColor?.toLowerCase();
+    switch (color) {
+      case 'red':
+        return 'assets/images/dragons/Sleeping/red.png';
+      case 'blue':
+        return 'assets/images/dragons/Sleeping/blue.png';
+      case 'green':
+        return 'assets/images/dragons/Sleeping/moss.png';
+      case 'gold':
+        return 'assets/images/dragons/Sleeping/gold.png';
+      case 'pink':
+        return 'assets/images/dragons/Sleeping/pink.png';
+      case 'white':
+        return 'assets/images/dragons/Sleeping/white.png';
+      default:
+        // No sprite for purple, teal, or unknown
+        return null;
+    }
+  }
+
   Color get _dragonThemeColor {
     final color = widget.user.dragonColor?.toLowerCase();
     switch (color) {
@@ -315,6 +335,21 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                 fit: BoxFit.cover,
               ),
             ),
+
+            // Sleeping Dragon on Window Sill
+            if (_dragonSpritePath != null)
+              Positioned(
+                // Placed on the window sill (roughly 71% from the top)
+                // x=0.6 is roughly the right side of the window
+                top: MediaQuery.of(context).size.height * 0.7,
+                right: MediaQuery.of(context).size.width * 0.15,
+                child: Image.asset(
+                  _dragonSpritePath!,
+                  width: 180,
+                  height: 180,
+                  fit: BoxFit.contain,
+                ),
+              ),
             SafeArea(
               child: SingleChildScrollView(
                 child: Padding(
@@ -322,16 +357,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 16),
-
-                      // Hero Banner
-                      Center(
-                        child: SleepingDragonWindow(
-                          colorName: widget.user.dragonColor,
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 120),
 
                       // Countdown Display
                       Center(
