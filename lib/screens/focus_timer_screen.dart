@@ -456,33 +456,41 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                         ), // Pad space when hiding selectors
 
                       const SizedBox(height: 48),
-
-                      // Giant Action Button
-                      ElevatedButton(
-                        onPressed: _isRunning
-                            ? () => _cancelTimer()
-                            : _startTimer,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isRunning
-                              ? AppColors.primary
-                              : _dragonThemeColor,
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          elevation: 8,
-                        ),
-                        child: Text(
-                          _isRunning ? 'Surrender' : 'Start Focus',
-                          style: GoogleFonts.medievalSharp(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2.0,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
                     ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Action Button at the bottom
+            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: _isRunning ? () => _cancelTimer() : _startTimer,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isRunning
+                        ? AppColors.primary
+                        : _dragonThemeColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 8,
+                    shadowColor: Colors.black,
+                  ),
+                  child: Text(
+                    _isRunning ? 'Surrender' : 'Start Focus',
+                    style: GoogleFonts.medievalSharp(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onPrimary,
+                    ),
                   ),
                 ),
               ),
