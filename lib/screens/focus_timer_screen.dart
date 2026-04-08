@@ -7,12 +7,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
+import '../models/book.dart';
 
 class FocusTimerScreen extends StatefulWidget {
   final User user;
   final String token;
+  final List<Book> activeBooks;
 
-  const FocusTimerScreen({super.key, required this.user, required this.token});
+  const FocusTimerScreen({
+    super.key,
+    required this.user,
+    required this.token,
+    required this.activeBooks,
+  });
 
   @override
   State<FocusTimerScreen> createState() => _FocusTimerScreenState();
@@ -25,6 +32,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   int _remainingSeconds = 0;
   bool _isRunning = false;
   late int _currentCoins;
+  Book? _selectedBook;
 
   final List<int> _presetMinutes = [5, 15, 30, 45, 60];
   final TextEditingController _customTimeController = TextEditingController();
@@ -35,6 +43,9 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     WidgetsBinding.instance.addObserver(this);
     _currentCoins = widget.user.coins;
     _remainingSeconds = _selectedMinutes * 60;
+    if (widget.activeBooks.isNotEmpty) {
+      _selectedBook = widget.activeBooks.first;
+    }
   }
 
   @override
@@ -186,6 +197,9 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
       _isRunning = false;
     });
 
+    final int? newPage = await _promptForProgress();
+    if (newPage == null) return;
+
     try {
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/focus_timer_complete'),
@@ -194,9 +208,9 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
           'Authorization': 'Bearer ${widget.token}',
         },
         body: jsonEncode({
-          'book_id': 0,
+          'book_id': _selectedBook?.id ?? 0,
           'minutes': _selectedMinutes,
-          'pages_read': 0,
+          'current_page': newPage,
         }),
       );
 
@@ -236,6 +250,66 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     }
   }
 
+  Future<int?> _promptForProgress() async {
+    final controller = TextEditingController(
+      text: _selectedBook?.currentPage.toString() ?? '0',
+    );
+    return showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Record Your Progress',
+            style: GoogleFonts.medievalSharp(color: AppColors.onSurface),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Great focus! What is your current page in "${_selectedBook?.title ?? "Unknown Scroll"}"?',
+                style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                decoration: InputDecoration(
+                  labelText: 'Current Page',
+                  labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
+                  filled: true,
+                  fillColor: AppColors.background.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                final val = int.tryParse(controller.text);
+                Navigator.of(context).pop(val ?? _selectedBook?.currentPage ?? 0);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: Text(
+                'Confirm Progress',
+                style: GoogleFonts.medievalSharp(color: AppColors.onPrimary),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -264,7 +338,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
       case 'white':
         return 'assets/images/dragons/Sleeping/white.png';
       default:
-        // No sprite for purple, teal, or unknown
         return null;
     }
   }
@@ -287,7 +360,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
       case 'teal':
         return const Color(0xFF008080);
       default:
-        return AppColors.tertiary; // fallback green
+        return AppColors.tertiary; 
     }
   }
 
@@ -328,7 +401,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
       body: SizedBox.expand(
         child: Stack(
           children: [
-            // Reading Nook Background Image
             Positioned.fill(
               child: Image.asset(
                 'assets/images/rooms/reading-nook.png',
@@ -336,11 +408,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
               ),
             ),
 
-            // Sleeping Dragon on Window Sill
             if (_dragonSpritePath != null)
               Positioned(
-                // Placed on the window sill (roughly 71% from the top)
-                // x=0.6 is roughly the right side of the window
                 top: MediaQuery.of(context).size.height * 0.7,
                 right: MediaQuery.of(context).size.width * 0.15,
                 child: Image.asset(
@@ -357,9 +426,73 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 120),
+                      const SizedBox(height: 80),
 
-                      // Countdown Display
+                      // Book Selector (only show if not running)
+                      if (!_isRunning) ...[
+                        Text(
+                          'Chosen Scroll',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.rosarivo(
+                            fontSize: 18,
+                            color: AppColors.secondaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (widget.activeBooks.length > 1)
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: _dragonThemeColor),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<Book>(
+                                  value: _selectedBook,
+                                  dropdownColor: AppColors.surface,
+                                  style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                                  items: widget.activeBooks.map((book) {
+                                    return DropdownMenuItem(
+                                      value: book,
+                                      child: Text(book.title),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _selectedBook = val;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Center(
+                            child: Text(
+                              _selectedBook?.title ?? 'No Scroll Selected',
+                              style: GoogleFonts.medievalSharp(
+                                fontSize: 24,
+                                color: AppColors.onBackground,
+                              ),
+                            ),
+                          ),
+                      ] else ...[
+                         // Show current book being read
+                         Center(
+                            child: Text(
+                              'Studying: ${_selectedBook?.title ?? "Unknown Scroll"}',
+                              style: GoogleFonts.medievalSharp(
+                                fontSize: 20,
+                                color: _dragonThemeColor,
+                              ),
+                            ),
+                         ),
+                      ],
+
+                      const SizedBox(height: 40),
+
                       Center(
                         child: Text(
                           _formatTime(_remainingSeconds),
@@ -384,7 +517,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
 
                       const SizedBox(height: 32),
 
-                      // Time Selector (only show if not running)
                       if (!_isRunning) ...[
                         Text(
                           'Select Duration',
@@ -429,7 +561,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                         ),
                         const SizedBox(height: 16),
 
-                        // Custom time input
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -479,7 +610,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                       if (_isRunning)
                         const SizedBox(
                           height: 180,
-                        ), // Pad space when hiding selectors
+                        ), 
 
                       const SizedBox(height: 48),
                     ],
@@ -488,7 +619,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
               ),
             ),
 
-            // Action Button at the bottom
             Positioned(
               bottom: 30,
               left: 0,
