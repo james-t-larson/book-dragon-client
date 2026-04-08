@@ -34,7 +34,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   late int _currentCoins;
   Book? _selectedBook;
 
-  final List<int> _presetMinutes = [5, 15, 30, 45, 60];
+  final List<int> _presetMinutes = [1, 5, 15, 30, 45, 60];
   final TextEditingController _customTimeController = TextEditingController();
 
   @override
@@ -565,10 +565,11 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             SizedBox(
-                              width: 120,
+                              width: 140,
                               child: TextField(
                                 controller: _customTimeController,
                                 keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.rosarivo(
                                   color: AppColors.onSurface,
                                 ),

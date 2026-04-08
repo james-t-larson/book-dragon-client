@@ -70,78 +70,86 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: AppColors.surface,
-              title: Text(
-                'Add New Scroll',
-                style: GoogleFonts.medievalSharp(
-                  color: AppColors.onSurface,
-                  fontSize: 24,
-                ),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 24.0),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Add New Scroll',
+                    style: GoogleFonts.medievalSharp(
+                      color: AppColors.onSurface,
+                      fontSize: 24,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: AppColors.muted),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildTextField(titleController, 'Title', Icons.book),
-                    _buildTextField(authorController, 'Author', Icons.person),
-                    _buildTextField(
-                      genreController,
-                      'Genre',
-                      Icons.category,
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            totalPagesController,
-                            'Total Pages',
-                            Icons.pages,
-                            isNumber: true,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildTextField(
-                            currentPageController,
-                            'Current Page',
-                            Icons.edit_note,
-                            isNumber: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: isCurrentlyReading,
-                          onChanged: (val) {
-                            setDialogState(() {
-                              isCurrentlyReading = val ?? false;
-                            });
-                          },
-                          activeColor: AppColors.primary,
-                        ),
-                        Expanded(
-                          child: Text(
-                            'Mark as "Currently Reading"',
-                            style: GoogleFonts.rosarivo(
-                              color: AppColors.onSurface,
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTextField(titleController, 'Title', Icons.book),
+                      _buildTextField(authorController, 'Author', Icons.person),
+                      _buildTextField(
+                        genreController,
+                        'Genre',
+                        Icons.category,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              totalPagesController,
+                              'Total Pages',
+                              Icons.pages,
+                              isNumber: true,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildTextField(
+                              currentPageController,
+                              'Current Page',
+                              Icons.edit_note,
+                              isNumber: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: isCurrentlyReading,
+                            onChanged: (val) {
+                              setDialogState(() {
+                                isCurrentlyReading = val ?? false;
+                              });
+                            },
+                            activeColor: AppColors.primary,
+                          ),
+                          Expanded(
+                            child: Text(
+                              'Mark as "Currently Reading"',
+                              style: GoogleFonts.rosarivo(
+                                color: AppColors.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Cancel',
-                    style: GoogleFonts.rosarivo(color: AppColors.muted),
-                  ),
-                ),
                 ElevatedButton(
                   onPressed: () async {
                     if (titleController.text.isNotEmpty) {
