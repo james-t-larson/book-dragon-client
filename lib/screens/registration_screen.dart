@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
-import 'home_screen.dart';
 import 'dragon_selection_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -95,7 +94,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', authResponse.token);
 
-        Navigator.pushReplacement(
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (_) => DragonSelectionScreen(
@@ -103,6 +103,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               token: authResponse.token,
             ),
           ),
+          (route) => false,
         );
       } else {
         final body = jsonDecode(response.body);
@@ -243,8 +244,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   icon: Icons.mail_outline_rounded,
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return 'Email is required';
+                    }
                     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
                     if (!emailRegex.hasMatch(v.trim())) {
                       return 'Enter a valid email address';

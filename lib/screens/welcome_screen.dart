@@ -467,20 +467,20 @@ class _VerticalDivider extends StatelessWidget {
 // ── Feature cards ─────────────────────────────────────────────────────────────
 
 class _HorizontalFeatureCards extends StatelessWidget {
-  final List<_FeatureCardData> _features = const [
-    _FeatureCardData(
+  final List<FeatureCardData> _features = const [
+    FeatureCardData(
       icon: Icons.auto_stories,
       title: 'Track Quests',
       body: 'Log every session. Never lose your page.',
       color: AppColors.primary,
     ),
-    _FeatureCardData(
+    FeatureCardData(
       icon: Icons.timer_outlined,
       title: 'Focus Timer',
       body: 'Earn rewards for deep reading streaks.',
       color: AppColors.secondary,
     ),
-    _FeatureCardData(
+    FeatureCardData(
       icon: Icons.eco_outlined,
       title: 'Dragon Grows',
       body: 'Level up your companion through books.',
@@ -496,19 +496,19 @@ class _HorizontalFeatureCards extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: _features.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, i) => _FeatureCard(data: _features[i]),
       ),
     );
   }
 }
 
-class _FeatureCardData {
+class FeatureCardData {
   final IconData icon;
   final String title;
   final String body;
   final Color color;
-  const _FeatureCardData({
+  const FeatureCardData({
     required this.icon,
     required this.title,
     required this.body,
@@ -517,7 +517,7 @@ class _FeatureCardData {
 }
 
 class _FeatureCard extends StatelessWidget {
-  final _FeatureCardData data;
+  final FeatureCardData data;
 
   const _FeatureCard({required this.data});
 
@@ -558,12 +558,15 @@ class _FeatureCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            data.body,
-            style: GoogleFonts.rosarivo(
-              fontSize: 11.5,
-              color: AppColors.onSurface,
-              height: 1.45,
+          Flexible(
+            child: Text(
+              data.body,
+              style: GoogleFonts.rosarivo(
+                fontSize: 11.5,
+                color: AppColors.onSurface,
+                height: 1.45,
+              ),
+              overflow: TextOverflow.fade,
             ),
           ),
         ],

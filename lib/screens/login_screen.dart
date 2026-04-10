@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (dragonResponse.statusCode == 200) {
           // Dragon exists
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
               builder: (_) => HomeScreen(
@@ -113,10 +113,11 @@ class _LoginScreenState extends State<LoginScreen>
                 token: authResponse.token,
               ),
             ),
+            (route) => false,
           );
         } else {
           // No dragon or error, go to dragon selection screen
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
               builder: (_) => DragonSelectionScreen(
@@ -124,6 +125,7 @@ class _LoginScreenState extends State<LoginScreen>
                 token: authResponse.token,
               ),
             ),
+            (route) => false,
           );
         }
       } else {
