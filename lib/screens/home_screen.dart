@@ -57,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // ignore: unused_element
   Future<void> _logout() async {
     // TODO: Call the logout endpoint here when implemented
     final prefs = await SharedPreferences.getInstance();
