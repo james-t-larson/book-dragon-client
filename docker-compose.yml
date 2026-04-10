@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   client:
+    image: registry.digitalocean.com/<your-registry-name>/book-dragon-client:latest
     build: 
       context: .
       dockerfile: Dockerfile
