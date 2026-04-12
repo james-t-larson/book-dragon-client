@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
+import 'widgets/responsive_wrapper.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -34,6 +36,7 @@ class BookDragonApp extends StatelessWidget {
       title: 'Book Dragon',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
+      builder: (context, child) => ResponsiveWrapper(child: child!),
       home: const SplashScreen(),
     );
   }

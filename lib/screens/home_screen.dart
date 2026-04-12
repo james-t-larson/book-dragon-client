@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../models/book.dart';
@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/books?currently_reading=true'),
+        Uri.parse('${AppConfig.baseUrl}/books?currently_reading=true'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _addBook(Book book) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/books'),
+        Uri.parse('${AppConfig.baseUrl}/books'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',

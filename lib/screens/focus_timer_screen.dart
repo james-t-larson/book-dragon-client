@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../models/book.dart';
@@ -202,7 +202,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/focus_timer_complete'),
+        Uri.parse('${AppConfig.baseUrl}/focus_timer_complete'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',

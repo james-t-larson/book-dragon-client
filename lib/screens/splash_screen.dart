@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../config/api_config.dart';
+import '../config/app_config.dart';
 import '../models/user.dart';
 import '../theme/app_theme.dart';
 import 'welcome_screen.dart';
@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
       }
 
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/auth/me'),
+        Uri.parse('${AppConfig.baseUrl}/auth/me'),
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',

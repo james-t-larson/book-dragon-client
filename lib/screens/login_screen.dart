@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import 'home_screen.dart';
@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/login'),
+        Uri.parse('${AppConfig.baseUrl}/login'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -90,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen>
         await prefs.setString('auth_token', authResponse.token);
 
         final dragonResponse = await http.get(
-          Uri.parse('${ApiConfig.baseUrl}/dragon'),
+          Uri.parse('${AppConfig.baseUrl}/dragon'),
           headers: {
             'Accept': 'application/json',
             'Authorization': 'Bearer ${authResponse.token}',

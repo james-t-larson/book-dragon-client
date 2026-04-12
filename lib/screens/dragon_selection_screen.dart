@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import 'home_screen.dart';
@@ -57,7 +57,7 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/dragon'),
+        Uri.parse('${AppConfig.baseUrl}/dragon'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

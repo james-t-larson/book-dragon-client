@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import 'dragon_selection_screen.dart';
@@ -73,7 +73,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/register'),
+        Uri.parse('${AppConfig.baseUrl}/register'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
