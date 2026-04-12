@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../config/app_config.dart';
+import 'button.dart';
 
 class UnsupportedScreen extends StatelessWidget {
   final String message;
@@ -53,7 +54,7 @@ class UnsupportedScreen extends StatelessWidget {
               ),
               if (showAppStoreLink) ...[
                 const SizedBox(height: 48),
-                ElevatedButton.icon(
+                AppButton.icon(
                   onPressed: _launchAppStore,
                   icon: const Icon(Icons.download, color: AppColors.onPrimary),
                   label: Text(

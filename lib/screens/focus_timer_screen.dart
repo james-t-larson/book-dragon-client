@@ -8,6 +8,7 @@ import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../models/book.dart';
+import '../widgets/button.dart';
 
 class FocusTimerScreen extends StatefulWidget {
   final User user;
@@ -114,7 +115,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                   ],
                 ),
                 actions: [
-                  TextButton(
+                  AppButton.text(
                     onPressed: () => Navigator.of(context).pop(false),
                     child: Text(
                       'Cancel',
@@ -123,7 +124,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                       ),
                     ),
                   ),
-                  ElevatedButton(
+                  AppButton(
                     onPressed: () async {
                       if (dontShowAgain) {
                         await prefs.setBool('hide_focus_loss_warning', true);
@@ -291,7 +292,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
             ],
           ),
           actions: [
-            ElevatedButton(
+            AppButton(
               onPressed: () {
                 final val = int.tryParse(controller.text);
                 Navigator.of(context).pop(val ?? _selectedBook?.currentPage ?? 0);
@@ -625,7 +626,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
               left: 0,
               right: 0,
               child: Center(
-                child: ElevatedButton(
+                child: AppButton(
                   onPressed: _isRunning ? () => _cancelTimer() : _startTimer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _isRunning

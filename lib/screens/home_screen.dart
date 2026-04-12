@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../models/book.dart';
 import '../widgets/dragon_art.dart';
+import '../widgets/button.dart';
 import 'focus_timer_screen.dart';
 import 'welcome_screen.dart';
 
@@ -166,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               actions: [
-                ElevatedButton(
+                AppButton(
                   onPressed: () async {
                     if (titleController.text.isNotEmpty) {
                       final newBook = Book(
@@ -336,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Center(
               child: _isLoading 
                 ? const CircularProgressIndicator(color: AppColors.primary)
-                : ElevatedButton.icon(
+                : AppButton.icon(
                     onPressed: () {
                       if (_activeBooks.isEmpty) {
                         _showAddBookDialog();

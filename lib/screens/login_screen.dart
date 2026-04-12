@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
+import '../widgets/button.dart';
 import 'home_screen.dart';
 import 'dragon_selection_screen.dart';
 
@@ -276,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen>
           const SizedBox(height: 32),
 
           // Submit button
-          ElevatedButton(
+          AppButton(
             onPressed: _isLoading ? null : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

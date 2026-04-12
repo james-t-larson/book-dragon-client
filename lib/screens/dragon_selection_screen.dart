@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
+import '../widgets/button.dart';
 import 'home_screen.dart';
 
 class DragonSelectionScreen extends StatefulWidget {
@@ -248,7 +250,7 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
             // Selection button
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              child: ElevatedButton(
+              child: AppButton(
                 onPressed: _isSubmitting ? null : _selectDragon,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _dragons[_currentPage].color,

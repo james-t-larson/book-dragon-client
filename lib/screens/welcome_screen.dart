@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../widgets/button.dart';
 import 'registration_screen.dart';
 import 'login_screen.dart';
 
@@ -295,7 +296,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         child: Column(
                           children: [
                             // Primary — Maroon
-                            ElevatedButton(
+                            AppButton(
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -329,7 +330,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             const SizedBox(height: 12),
 
                             // Secondary — London Blue outline
-                            OutlinedButton(
+                            AppButton.outlined(
                               onPressed: () {
                                 Navigator.push(
                                   context,
