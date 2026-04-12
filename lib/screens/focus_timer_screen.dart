@@ -327,17 +327,17 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     final color = widget.user.dragonColor?.toLowerCase();
     switch (color) {
       case 'red':
-        return 'assets/images/dragons/Sleeping/red.png';
+        return 'assets/images/dragons/sleeping/red.png';
       case 'blue':
-        return 'assets/images/dragons/Sleeping/blue.png';
+        return 'assets/images/dragons/sleeping/blue.png';
       case 'green':
-        return 'assets/images/dragons/Sleeping/moss.png';
+        return 'assets/images/dragons/sleeping/moss.png';
       case 'gold':
-        return 'assets/images/dragons/Sleeping/gold.png';
+        return 'assets/images/dragons/sleeping/gold.png';
       case 'pink':
-        return 'assets/images/dragons/Sleeping/pink.png';
+        return 'assets/images/dragons/sleeping/pink.png';
       case 'white':
-        return 'assets/images/dragons/Sleeping/white.png';
+        return 'assets/images/dragons/sleeping/white.png';
       default:
         return null;
     }

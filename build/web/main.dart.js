@@ -42260,12 +42260,12 @@ return A.L($async$EN,r)},
 Rz(a){var s=null
 this.c.af(t.Pu).f.nq(A.BM(s,s,s,B.Z,s,B.C,s,A.aL(a,s,s,s,A.bl().$1$color(B.u),s,s),s,B.cZ,s,s,s,s,s,s,s,s,s,s))},
 gNx(){var s=this.a.c.w
-switch(s==null?null:s.toLowerCase()){case"red":return"assets/images/dragons/Sleeping/red.png"
-case"blue":return"assets/images/dragons/Sleeping/blue.png"
-case"green":return"assets/images/dragons/Sleeping/moss.png"
-case"gold":return"assets/images/dragons/Sleeping/gold.png"
-case"pink":return"assets/images/dragons/Sleeping/pink.png"
-case"white":return"assets/images/dragons/Sleeping/white.png"
+switch(s==null?null:s.toLowerCase()){case"red":return"assets/images/dragons/sleeping/red.png"
+case"blue":return"assets/images/dragons/sleeping/blue.png"
+case"green":return"assets/images/dragons/sleeping/moss.png"
+case"gold":return"assets/images/dragons/sleeping/gold.png"
+case"pink":return"assets/images/dragons/sleeping/pink.png"
+case"white":return"assets/images/dragons/sleeping/white.png"
 default:return null}},
 gnF(){var s=this.a.c.w
 switch(s==null?null:s.toLowerCase()){case"red":return B.nd
@@ -43048,7 +43048,7 @@ p=A.eR(p,new A.arl(this),q)
 s=this.f
 s===$&&A.a()
 r=t.p
-return A.qa(q,B.bz,A.e2(q,A.fK(B.bV,A.b([A.dd(A.dF(A.b([p,A.ah6(A.dd(A.awj(A.tk("assets/images/dragons/Sleeping/gold.png",B.fM,220,220),s),q,q),B.MA),B.zP,A.aL("Book Dragon",q,q,q,A.c3().$4$color$fontSize$letterSpacing$shadows(B.cW,42,2,A.b([B.PF],t.kO)),q,q)],r),B.P,B.dc,B.X),q,q),A.jE(60,A.dd(A.aL("Waking the dragon...",q,q,q,A.bl().$3$color$fontSize$fontStyle(B.u.bx(0.7),16,B.aU),q,q),q,q),q,q,0,0,q,q)],r),B.C,B.b7,q),B.w,q,q,B.BI,q,q,q,q,q,q,q),!1)}}
+return A.qa(q,B.bz,A.e2(q,A.fK(B.bV,A.b([A.dd(A.dF(A.b([p,A.ah6(A.dd(A.awj(A.tk("assets/images/dragons/sleeping/gold.png",B.fM,220,220),s),q,q),B.MA),B.zP,A.aL("Book Dragon",q,q,q,A.c3().$4$color$fontSize$letterSpacing$shadows(B.cW,42,2,A.b([B.PF],t.kO)),q,q)],r),B.P,B.dc,B.X),q,q),A.jE(60,A.dd(A.aL("Waking the dragon...",q,q,q,A.bl().$3$color$fontSize$fontStyle(B.u.bx(0.7),16,B.aU),q,q),q,q),q,q,0,0,q,q)],r),B.C,B.b7,q),B.w,q,q,B.BI,q,q,q,q,q,q,q),!1)}}
 A.ari.prototype={
 $1(a){return new A.kw(this.b,this.a,null)},
 $S:88}
@@ -43078,7 +43078,7 @@ av(){var s,r,q,p,o,n=this,m=null
 n.aN()
 s=["blue","gold","moss","pink","red","white"][B.Dp.aph(6)]
 n.z!==$&&A.aO()
-n.z="assets/images/dragons/Sleeping/"+s+".png"
+n.z="assets/images/dragons/sleeping/"+s+".png"
 s=A.bh(m,B.FD,m,m,n)
 s.vI(!0)
 n.d!==$&&A.aO()

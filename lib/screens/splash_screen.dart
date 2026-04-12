@@ -170,7 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: ScaleTransition(
                         scale: _breatheAnimation,
                         child: Image.asset(
-                          'assets/images/dragons/Sleeping/gold.png',
+                          'assets/images/dragons/sleeping/gold.png',
                           width: 220,
                           height: 220,
                           fit: BoxFit.contain,

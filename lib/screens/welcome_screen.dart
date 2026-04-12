@@ -33,7 +33,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final dragonColors = ['blue', 'gold', 'moss', 'pink', 'red', 'white'];
     final randomIdx = math.Random().nextInt(dragonColors.length);
     _dragonAsset =
-        'assets/images/dragons/Sleeping/${dragonColors[randomIdx]}.png';
+        'assets/images/dragons/sleeping/${dragonColors[randomIdx]}.png';
 
     _floatController = AnimationController(
       vsync: this,
