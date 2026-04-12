@@ -67,7 +67,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/rooms/
-    - assets/images/dragons/Sleeping/
+    - assets/images/dragons/sleeping/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
