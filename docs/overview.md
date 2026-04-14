@@ -30,15 +30,15 @@ stateDiagram-v2
     [*] --> SplashScreen: Launch App
 
     SplashScreen --> WelcomeScreen: No token or Invalid Auth
-    SplashScreen --> DragonSelectionScreen: Valid token, missing Dragon
-    SplashScreen --> HomeScreen: Valid token, has Dragon
+    SplashScreen --> DragonSelectionScreen: Authenticated doesn't have a dragon
+    SplashScreen --> HomeScreen: Authenticated has dragon
 
     WelcomeScreen --> LoginScreen: Taps Login
     WelcomeScreen --> RegistrationScreen: Taps Register
 
     RegistrationScreen --> DragonSelectionScreen: Successful Auth
-    LoginScreen --> DragonSelectionScreen: Successful Auth, missing Dragon
-    LoginScreen --> HomeScreen: Successful Auth, has Dragon
+    LoginScreen --> DragonSelectionScreen: Authenticated doesn't have a dragon
+    LoginScreen --> HomeScreen: Authenticated has dragon
 
     DragonSelectionScreen --> HomeScreen: Selects Dragon
 
