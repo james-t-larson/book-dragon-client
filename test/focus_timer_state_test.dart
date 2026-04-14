@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:book_dragon_client/screens/focus_timer_screen.dart';
 import 'package:book_dragon_client/models/user.dart';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:book_dragon_client/models/book.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';

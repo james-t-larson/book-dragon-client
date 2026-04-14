@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
-import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../widgets/button.dart';
@@ -28,24 +27,19 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
   bool _isSubmitting = false;
 
   static const List<_DragonSlide> _dragons = [
-    _DragonSlide('dragon_red.png', 'Red Dragon', 'red', Color(0xFFCC3333)),
-    _DragonSlide('dragon_blue.png', 'Blue Dragon', 'blue', Color(0xFF3388CC)),
+    _DragonSlide('dragons/sleeping/red.png', 'Red Dragon', 'red', Color(0xFFCC3333)),
+    _DragonSlide('dragons/sleeping/blue.png', 'Blue Dragon', 'blue', Color(0xFF3388CC)),
     _DragonSlide(
-      'dragon_green.png',
-      'Green Dragon',
-      'green',
+      'dragons/sleeping/moss.png',
+      'Moss Dragon',
+      'moss',
       Color(0xFF408000),
     ),
-    _DragonSlide('dragon_gold.png', 'Gold Dragon', 'gold', Color(0xFFD4AF37)),
-    _DragonSlide('dragon_pink.png', 'Pink Dragon', 'pink', Color(0xFFCC6699)),
-    _DragonSlide(
-      'dragon_purple.png',
-      'Purple Dragon',
-      'purple',
-      Color(0xFF8844AA),
-    ),
-    _DragonSlide('dragon_teal.png', 'Teal Dragon', 'teal', Color(0xFF008080)),
+    _DragonSlide('dragons/sleeping/gold.png', 'Gold Dragon', 'gold', Color(0xFFD4AF37)),
+    _DragonSlide('dragons/sleeping/pink.png', 'Pink Dragon', 'pink', Color(0xFFCC6699)),
+    _DragonSlide('dragons/sleeping/white.png', 'White Dragon', 'white', Color(0xFFFFFFFF)),
   ];
+
 
   @override
   void dispose() {

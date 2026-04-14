@@ -56,6 +56,12 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/images/dragons/sleeping/gold.png'), context);
+  }
+
   Future<void> _checkAuthStatus() async {
     try {
       // Simulate some extra loading time for the beautiful splash
@@ -140,43 +146,54 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated Glow behind dragon
-                  AnimatedBuilder(
-                    animation: _glowAnimation,
-                    builder: (context, child) {
-                      return Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shimmer.withValues(
-                                alpha: _glowAnimation.value,
-                              ),
-                              blurRadius: 50,
-                              spreadRadius: 10,
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Animated Glow behind dragon
+                      AnimatedBuilder(
+                        animation: _glowAnimation,
+                        builder: (context, child) {
+                          return Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shimmer.withValues(
+                                    alpha: _glowAnimation.value,
+                                  ),
+                                  blurRadius: 50,
+                                  spreadRadius: 10,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  
-                  // Scaling Dragon
-                  Transform.translate(
-                    offset: const Offset(0, -100), // Adjust glow position
-                    child: Center(
-                      child: ScaleTransition(
+                          );
+                        },
+                      ),
+                      
+                      // Scaling Dragon perfectly centered on glow
+                      ScaleTransition(
                         scale: _breatheAnimation,
                         child: Image.asset(
                           'assets/images/dragons/sleeping/gold.png',
                           width: 220,
                           height: 220,
                           fit: BoxFit.contain,
+                          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                            if (wasSynchronouslyLoaded) {
+                              return child;
+                            }
+                            return AnimatedOpacity(
+                              opacity: frame == null ? 0 : 1,
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeOut,
+                              child: child,
+                            );
+                          },
                         ),
                       ),
-                    ),
+                    ],
                   ),
 
                   const SizedBox(height: 20),

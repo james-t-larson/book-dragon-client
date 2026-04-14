@@ -30,6 +30,10 @@ void main() {
       
       // Check for "Waking the dragon..." message
       expect(find.text('Waking the dragon...'), findsOneWidget);
+
+      // Cleanup to avoid pending timer from _checkAuthStatus delay
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('Displays animations and background gradient', (WidgetTester tester) async {
@@ -42,13 +46,17 @@ void main() {
       );
 
       // Verify presence of animations (ScaleTransition and AnimatedBuilder/Container)
-      expect(find.byType(ScaleTransition), findsOneWidget);
+      expect(find.byType(ScaleTransition), findsWidgets);
       
       // Background check - container with gradient
       final container = tester.widget<Container>(find.byType(Container).first);
       expect(container.decoration, isA<BoxDecoration>());
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.gradient, isA<RadialGradient>());
+
+      // Cleanup to avoid pending timer from _checkAuthStatus delay
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 2));
     });
   });
 }

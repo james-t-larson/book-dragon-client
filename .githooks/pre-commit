@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Book Dragon pre-commit hook
+# Runs all tests and checks for syntax errors and linting issues.
+
+echo "Running flutter analyze..."
+flutter analyze
+ANALYZE_RESULT=$?
+
+if [ $ANALYZE_RESULT -ne 0 ]; then
+  echo ""
+  echo "==========================================================="
+  echo "❌ Error: flutter analyze failed."
+  echo "Please fix the linting and syntax errors above before committing."
+  echo "==========================================================="
+  exit 1
+fi
+
+echo "Running flutter test..."
+flutter test
+TEST_RESULT=$?
+
+if [ $TEST_RESULT -ne 0 ]; then
+  echo ""
+  echo "==========================================================="
+  echo "❌ Error: flutter test failed."
+  echo "Please fix the failing tests above before committing."
+  echo "==========================================================="
+  exit 1
+fi
+
+echo "✅ All checks passed. Proceeding with commit."
+exit 0

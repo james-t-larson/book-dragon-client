@@ -12,6 +12,7 @@ class DragonArt extends StatelessWidget {
     const validColors = {'pink', 'blue', 'black', 'green', 'silver', 'white', 'red', 'gold', 'rainbow'};
     final assetName = validColors.contains(colorStr) ? colorStr : 'red';
 
+
     return Image.asset(
       'assets/images/dragons/sleeping/$assetName.png',
       width: 216,
