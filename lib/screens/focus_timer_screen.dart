@@ -13,13 +13,16 @@ import '../widgets/button.dart';
 class FocusTimerScreen extends StatefulWidget {
   final User user;
   final String token;
-  final List<Book> activeBooks;
+
+  /// Called when the user should be navigated away from this screen
+  /// (e.g., dismissed the add-book dialog without adding a scroll).
+  final VoidCallback? onNavigateBack;
 
   const FocusTimerScreen({
     super.key,
     required this.user,
     required this.token,
-    required this.activeBooks,
+    this.onNavigateBack,
   });
 
   @override
@@ -34,6 +37,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   bool _isRunning = false;
   late int _currentCoins;
   Book? _selectedBook;
+  List<Book> _activeBooks = [];
+  bool _isFetchingBooks = true;
 
   final List<int> _presetMinutes = [1, 5, 15, 30, 45, 60];
   final TextEditingController _customTimeController = TextEditingController();
@@ -44,9 +49,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     WidgetsBinding.instance.addObserver(this);
     _currentCoins = widget.user.coins;
     _remainingSeconds = _selectedMinutes * 60;
-    if (widget.activeBooks.isNotEmpty) {
-      _selectedBook = widget.activeBooks.first;
-    }
+    _fetchActiveBooks(promptIfEmpty: true);
   }
 
   @override
@@ -323,6 +326,283 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Book fetching & first-book flow
+  // ---------------------------------------------------------------------------
+
+  /// Fetches the user's currently-reading books from the API.
+  ///
+  /// When [promptIfEmpty] is true and no books are returned, the
+  /// "Add a Scroll to Begin" dialog is shown automatically.
+  Future<void> _fetchActiveBooks({bool promptIfEmpty = false}) async {
+    setState(() => _isFetchingBooks = true);
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConfig.baseUrl}/books?currently_reading=true'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final books = data.map((b) => Book.fromJson(b)).toList();
+        setState(() {
+          _activeBooks = books;
+          if (books.isNotEmpty && _selectedBook == null) {
+            _selectedBook = books.first;
+          }
+          _isFetchingBooks = false;
+        });
+
+        if (promptIfEmpty && books.isEmpty && mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showAddFirstBookDialog();
+          });
+        }
+      } else {
+        setState(() => _isFetchingBooks = false);
+      }
+    } catch (e) {
+      setState(() => _isFetchingBooks = false);
+    }
+  }
+
+  /// Displays a modal dialog prompting the user to add their first scroll.
+  ///
+  /// On success → shows [_showBeginReadingDialog].
+  /// On dismiss → calls [widget.onNavigateBack] to return to the Home tab.
+  Future<void> _showAddFirstBookDialog() async {
+    final titleController = TextEditingController();
+    final authorController = TextEditingController();
+    final totalPagesController = TextEditingController();
+    final currentPageController = TextEditingController();
+    final genreController = TextEditingController();
+
+    final added = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 12.0, vertical: 24.0),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Add a Scroll to Begin',
+                  style: GoogleFonts.medievalSharp(
+                    color: AppColors.onSurface,
+                    fontSize: 22,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: AppColors.muted),
+                onPressed: () => Navigator.pop(dialogContext, false),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: MediaQuery.of(dialogContext).size.width,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'You need a scroll in your library before you can '
+                    'begin a focus session.',
+                    style: GoogleFonts.rosarivo(
+                      fontSize: 13,
+                      color: AppColors.muted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDialogTextField(
+                      titleController, 'Title', Icons.book),
+                  _buildDialogTextField(
+                      authorController, 'Author', Icons.person),
+                  _buildDialogTextField(
+                      genreController, 'Genre', Icons.category),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDialogTextField(
+                          totalPagesController,
+                          'Total Pages',
+                          Icons.pages,
+                          isNumber: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDialogTextField(
+                          currentPageController,
+                          'Current Page',
+                          Icons.edit_note,
+                          isNumber: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            AppButton(
+              onPressed: () async {
+                if (titleController.text.isEmpty) return;
+                final newBook = Book(
+                  id: 0,
+                  title: titleController.text,
+                  author: authorController.text,
+                  genre: genreController.text,
+                  totalPages:
+                      int.tryParse(totalPagesController.text) ?? 0,
+                  currentPage:
+                      int.tryParse(currentPageController.text) ?? 0,
+                  reading: true,
+                );
+                await _addFirstBook(newBook);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext, _activeBooks.isNotEmpty);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _dragonThemeColor,
+              ),
+              child: Text(
+                'Add Scroll',
+                style: GoogleFonts.medievalSharp(
+                  color: AppColors.onPrimary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) return;
+
+    if (added == true && _activeBooks.isNotEmpty) {
+      _showBeginReadingDialog(_activeBooks.first);
+    } else {
+      widget.onNavigateBack?.call();
+    }
+  }
+
+  /// POSTs a new book to the server and re-fetches the active books list.
+  Future<void> _addFirstBook(Book book) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConfig.baseUrl}/books'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+        body: jsonEncode(book.toJson()),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        await _fetchActiveBooks();
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Failed to add scroll. Please try again.');
+      }
+    }
+  }
+
+  /// Follow-up dialog asking if the user wants to start reading immediately.
+  void _showBeginReadingDialog(Book book) {
+    showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Begin Reading?',
+            style: GoogleFonts.medievalSharp(color: AppColors.onSurface),
+          ),
+          content: Text(
+            'Would you like to start a focus session with '
+            '"${book.title}" now?',
+            style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+          ),
+          actions: [
+            AppButton.text(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+                widget.onNavigateBack?.call();
+              },
+              child: Text(
+                'Not Now',
+                style: GoogleFonts.rosarivo(
+                  color: AppColors.secondaryLight,
+                ),
+              ),
+            ),
+            AppButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+                // Book is already selected; user stays on timer screen
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _dragonThemeColor,
+              ),
+              child: Text(
+                'Start Reading',
+                style: GoogleFonts.medievalSharp(
+                  color: AppColors.onPrimary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDialogTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isNumber = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
+          prefixIcon: Icon(icon, color: AppColors.secondaryLight),
+          filled: true,
+          fillColor: AppColors.background.withValues(alpha: 0.5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                const BorderSide(color: AppColors.primary, width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+
   String? get _dragonSpritePath {
     final color = widget.user.dragonColor?.toLowerCase();
     switch (color) {
@@ -420,6 +700,11 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                   fit: BoxFit.contain,
                 ),
               ),
+            if (_isFetchingBooks)
+              const Center(
+                child: CircularProgressIndicator(color: AppColors.shimmer),
+              )
+            else
             SafeArea(
               child: SingleChildScrollView(
                 child: Padding(
@@ -440,7 +725,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                           ),
                         ),
                         const SizedBox(height: 8),
-                        if (widget.activeBooks.length > 1)
+                        if (_activeBooks.length > 1)
                           Center(
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -454,7 +739,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                                   value: _selectedBook,
                                   dropdownColor: AppColors.surface,
                                   style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                                  items: widget.activeBooks.map((book) {
+                                  items: _activeBooks.map((book) {
                                     return DropdownMenuItem(
                                       value: book,
                                       child: Text(book.title),
@@ -621,13 +906,16 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
               ),
             ),
 
+            if (!_isFetchingBooks)
             Positioned(
               bottom: 30,
               left: 0,
               right: 0,
               child: Center(
                 child: AppButton(
-                  onPressed: _isRunning ? () => _cancelTimer() : _startTimer,
+                  onPressed: _isRunning
+                      ? () => _cancelTimer()
+                      : (_selectedBook != null ? _startTimer : null),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _isRunning
                         ? AppColors.primary

@@ -50,7 +50,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           FocusTimerScreen(
             user: widget.user,
             token: widget.token,
-            activeBooks: const [], // will be loaded internally
+            onNavigateBack: () => setState(() => _currentIndex = 1),
           ),
           // 1 — Home (Library)
           HomeScreen(user: widget.user, token: widget.token),

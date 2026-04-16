@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:book_dragon_client/models/user.dart';
-import 'package:book_dragon_client/models/tourney.dart';
+
 import 'package:book_dragon_client/screens/tourney_screen.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
 import 'package:book_dragon_client/widgets/chat_bubble.dart';

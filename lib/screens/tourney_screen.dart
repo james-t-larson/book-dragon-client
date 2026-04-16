@@ -166,10 +166,10 @@ class _TourneyScreenState extends State<TourneyScreen>
         // Background — tourney hall
         Positioned.fill(
           child: Image.asset(
-            'assets/images/rooms/tourney_hall.png',
+            'assets/images/rooms/tourney-hall.png',
             fit: BoxFit.cover,
             // Graceful fallback if asset not yet generated:
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (context, error, stackTrace) => Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -207,7 +207,7 @@ class _TourneyScreenState extends State<TourneyScreen>
                 width: 200,
                 height: 200,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
               ),
             ),
           ),
@@ -223,7 +223,7 @@ class _TourneyScreenState extends State<TourneyScreen>
               width: 160,
               height: 200,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Icon(
+              errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.shield,
                 size: 100,
                 color: AppColors.shimmer.withValues(alpha: 0.5),

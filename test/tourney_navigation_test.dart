@@ -4,9 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:book_dragon_client/models/user.dart';
 import 'package:book_dragon_client/screens/main_navigation_screen.dart';
-import 'package:book_dragon_client/screens/home_screen.dart';
-import 'package:book_dragon_client/screens/focus_timer_screen.dart';
-import 'package:book_dragon_client/screens/tourney_screen.dart';
+
 import 'package:book_dragon_client/theme/app_theme.dart';
 
 // ---------------------------------------------------------------------------

@@ -57,7 +57,6 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
-              activeBooks: [dummyBook],
             ),
           ),
         ),
@@ -82,7 +81,6 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
-              activeBooks: [dummyBook],
             ),
           ),
         ),
@@ -109,7 +107,6 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
-              activeBooks: [dummyBook],
             ),
           ),
         ),
@@ -137,7 +134,6 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
-              activeBooks: [dummyBook],
             ),
           ),
         ),
@@ -175,7 +171,6 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
-              activeBooks: [dummyBook],
             ),
           ),
         ),

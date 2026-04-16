@@ -348,7 +348,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             builder: (_) => FocusTimerScreen(
                               user: widget.user,
                               token: widget.token,
-                              activeBooks: _activeBooks,
                             ),
                           ),
                         ).then((_) => _fetchActiveBooks());

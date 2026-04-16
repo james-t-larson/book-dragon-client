@@ -1,10 +1,10 @@
-/// Models for the Tourney Hall (Challenges) feature.
-///
-/// Corresponds to the backend API endpoints:
-/// - GET /constants → [TourneyConfig]
-/// - GET /tourney → [Tourney]
-/// - POST /tourney → [Tourney]
-/// - POST /join_tourney → [Tourney]
+// Models for the Tourney Hall (Challenges) feature.
+//
+// Corresponds to the backend API endpoints:
+// - GET /constants → TourneyConfig
+// - GET /tourney → Tourney
+// - POST /tourney → Tourney
+// - POST /join_tourney → Tourney
 
 // ---------------------------------------------------------------------------
 // Constants (dropdown options from GET /constants)

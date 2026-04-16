@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -251,7 +250,7 @@ void main() {
     late TourneyViewModel vm;
 
     /// Creates a ViewModel with mocked service responses.
-    TourneyViewModel _createVm({
+    TourneyViewModel createVm({
       int constantsStatus = 200,
       int tourneyStatus = 404, // default: no active tourney
       bool dailyComplete = false,
@@ -300,7 +299,7 @@ void main() {
     // --- Initialization & API Handling ---
 
     test('fetchInitialData with no active challenge', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
       await vm.fetchInitialData();
 
       expect(vm.isLoading, false);
@@ -311,7 +310,7 @@ void main() {
     });
 
     test('fetchInitialData with active challenge', () async {
-      vm = _createVm(tourneyStatus: 200);
+      vm = createVm(tourneyStatus: 200);
       await vm.fetchInitialData();
 
       expect(vm.isLoading, false);
@@ -320,7 +319,7 @@ void main() {
     });
 
     test('fetchInitialData loads constants correctly', () async {
-      vm = _createVm();
+      vm = createVm();
       await vm.fetchInitialData();
 
       expect(vm.tourneyConfig, isNotNull);
@@ -329,7 +328,7 @@ void main() {
     });
 
     test('fetchInitialData sets errorMessage on failure', () async {
-      vm = _createVm(constantsStatus: 500);
+      vm = createVm(constantsStatus: 500);
       await vm.fetchInitialData();
 
       expect(vm.isLoading, false);
@@ -339,7 +338,7 @@ void main() {
     // --- Taunt Cycle Logic ---
 
     test('startTauntCycle updates taunt index', () async {
-      vm = _createVm(tourneyStatus: 200);
+      vm = createVm(tourneyStatus: 200);
       await vm.fetchInitialData();
 
       expect(vm.currentTauntIndex, 0);
@@ -351,7 +350,7 @@ void main() {
     });
 
     test('taunt wraps around when index exceeds list length', () async {
-      vm = _createVm(tourneyStatus: 200);
+      vm = createVm(tourneyStatus: 200);
       await vm.fetchInitialData();
 
       // Simulate wrap-around manually via the getter
@@ -368,19 +367,19 @@ void main() {
     });
 
     test('dispose stops taunt cycle without errors', () async {
-      vm = _createVm(tourneyStatus: 200);
+      vm = createVm(tourneyStatus: 200);
       await vm.fetchInitialData();
 
       // Should not throw
       vm.dispose();
       // Re-assign so tearDown doesn't double-dispose
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
     });
 
     // --- Action Handling: Create & Join ---
 
     test('createChallenge success populates activeTourney', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
       await vm.fetchInitialData();
       expect(vm.hasActiveChallenge, false);
 
@@ -419,7 +418,7 @@ void main() {
     });
 
     test('joinChallenge success sets active tourney', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
       await vm.fetchInitialData();
 
       await vm.joinChallenge('ABC123');
@@ -458,7 +457,7 @@ void main() {
     // --- Progress Math ---
 
     test('overallProgressPercentage calculates correctly', () async {
-      vm = _createVm(
+      vm = createVm(
         tourneyStatus: 200,
         daysComplete: 3,
         daysGoal: 10,
@@ -469,14 +468,14 @@ void main() {
     });
 
     test('overallProgressPercentage is 0 when no active challenge', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
       await vm.fetchInitialData();
 
       expect(vm.overallProgressPercentage, 0.0);
     });
 
     test('overallProgressPercentage clamps to 1.0', () async {
-      vm = _createVm(
+      vm = createVm(
         tourneyStatus: 200,
         daysComplete: 12,
         daysGoal: 10,
@@ -489,7 +488,7 @@ void main() {
     // --- Draft State ---
 
     test('draft state management does not trigger network', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
       await vm.fetchInitialData();
 
       int listenerCalls = 0;
@@ -508,7 +507,7 @@ void main() {
     });
 
     test('isValidDraft false with empty name', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
 
       vm.setDraftName('');
       vm.setDraftDailyMinutes(15);
@@ -518,7 +517,7 @@ void main() {
     });
 
     test('isValidDraft false with missing dailyMinutes', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
 
       vm.setDraftName('Quest');
       vm.setDraftOverallDays(7);
@@ -527,7 +526,7 @@ void main() {
     });
 
     test('isValidDraft false with missing overallDays', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
 
       vm.setDraftName('Quest');
       vm.setDraftDailyMinutes(15);
@@ -536,7 +535,7 @@ void main() {
     });
 
     test('isValidDraft true when all fields set', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
 
       vm.setDraftName('Quest');
       vm.setDraftDailyMinutes(15);
@@ -546,7 +545,7 @@ void main() {
     });
 
     test('isValidDraft false with whitespace-only name', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
 
       vm.setDraftName('   ');
       vm.setDraftDailyMinutes(15);
@@ -558,7 +557,7 @@ void main() {
     // --- isDailyComplete ---
 
     test('isDailyComplete returns true when daily progress complete', () async {
-      vm = _createVm(tourneyStatus: 200, dailyComplete: true);
+      vm = createVm(tourneyStatus: 200, dailyComplete: true);
       await vm.fetchInitialData();
 
       expect(vm.isDailyComplete, true);
@@ -566,14 +565,14 @@ void main() {
 
     test('isDailyComplete returns false when daily progress incomplete',
         () async {
-      vm = _createVm(tourneyStatus: 200, dailyComplete: false);
+      vm = createVm(tourneyStatus: 200, dailyComplete: false);
       await vm.fetchInitialData();
 
       expect(vm.isDailyComplete, false);
     });
 
     test('isDailyComplete returns false when no active challenge', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
       await vm.fetchInitialData();
 
       expect(vm.isDailyComplete, false);
@@ -582,7 +581,7 @@ void main() {
     // --- Invite link ---
 
     test('inviteLinkText contains invite code', () async {
-      vm = _createVm(tourneyStatus: 200);
+      vm = createVm(tourneyStatus: 200);
       await vm.fetchInitialData();
 
       expect(vm.inviteLinkText, contains('ABC123'));
@@ -592,14 +591,14 @@ void main() {
     // --- currentTaunt ---
 
     test('currentTaunt returns empty when no active challenge', () async {
-      vm = _createVm(tourneyStatus: 404);
+      vm = createVm(tourneyStatus: 404);
       await vm.fetchInitialData();
 
       expect(vm.currentTaunt, '');
     });
 
     test('currentTaunt returns first taunt on init', () async {
-      vm = _createVm(tourneyStatus: 200);
+      vm = createVm(tourneyStatus: 200);
       await vm.fetchInitialData();
 
       expect(vm.currentTaunt, 'Get reading, squire!');
@@ -608,7 +607,7 @@ void main() {
     // --- Dragon color ---
 
     test('userDragonColor is stored from constructor', () {
-      vm = _createVm();
+      vm = createVm();
       expect(vm.userDragonColor, 'moss');
     });
   });

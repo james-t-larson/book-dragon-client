@@ -81,7 +81,6 @@ void main() {
             home: FocusTimerScreen(
               user: user,
               token: 'fake_token',
-              activeBooks: [book],
             )
           )
         );

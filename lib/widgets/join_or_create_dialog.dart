@@ -243,7 +243,7 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
 
                 // Daily Commitment dropdown
                 DropdownButtonFormField<int>(
-                  value: vm.draftDailyMinutes,
+                  initialValue: vm.draftDailyMinutes,
                   dropdownColor: AppColors.surface,
                   style: GoogleFonts.rosarivo(color: AppColors.onSurface),
                   decoration: InputDecoration(
@@ -271,7 +271,7 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
 
                 // Overall Duration dropdown
                 DropdownButtonFormField<int>(
-                  value: vm.draftOverallDays,
+                  initialValue: vm.draftOverallDays,
                   dropdownColor: AppColors.surface,
                   style: GoogleFonts.rosarivo(color: AppColors.onSurface),
                   decoration: InputDecoration(
@@ -301,13 +301,14 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
                 AppButton(
                   onPressed: (vm.isValidDraft && !vm.isLoading)
                       ? () async {
+                          final navigator = Navigator.of(context);
                           await vm.createChallenge(
                             vm.draftName,
                             vm.draftDailyMinutes!,
                             vm.draftOverallDays!,
                           );
                           if (vm.hasActiveChallenge && mounted) {
-                            Navigator.pop(context);
+                            navigator.pop();
                           }
                         }
                       : null,
