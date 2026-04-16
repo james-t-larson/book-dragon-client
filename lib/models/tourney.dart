@@ -1,0 +1,187 @@
+/// Models for the Tourney Hall (Challenges) feature.
+///
+/// Corresponds to the backend API endpoints:
+/// - GET /constants → [TourneyConfig]
+/// - GET /tourney → [Tourney]
+/// - POST /tourney → [Tourney]
+/// - POST /join_tourney → [Tourney]
+
+// ---------------------------------------------------------------------------
+// Constants (dropdown options from GET /constants)
+// ---------------------------------------------------------------------------
+
+/// A single selectable option in a tourney configuration dropdown.
+class TourneyConfigOption {
+  final String label;
+  final int value;
+
+  const TourneyConfigOption({required this.label, required this.value});
+
+  factory TourneyConfigOption.fromJson(Map<String, dynamic> json) {
+    return TourneyConfigOption(
+      label: json['label'] as String,
+      value: json['value'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'label': label, 'value': value};
+}
+
+/// Response shape from `GET /constants`.
+class TourneyConfig {
+  final List<TourneyConfigOption> overallGoalDays;
+  final List<TourneyConfigOption> dailyGoalMinutes;
+
+  const TourneyConfig({
+    required this.overallGoalDays,
+    required this.dailyGoalMinutes,
+  });
+
+  factory TourneyConfig.fromJson(Map<String, dynamic> json) {
+    return TourneyConfig(
+      overallGoalDays: (json['overall_goal_days'] as List)
+          .map((e) => TourneyConfigOption.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      dailyGoalMinutes: (json['daily_goal_minutes'] as List)
+          .map((e) => TourneyConfigOption.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tourney state (from GET /tourney)
+// ---------------------------------------------------------------------------
+
+/// Daily reading progress within an active tourney.
+class DailyProgress {
+  final bool isComplete;
+  final int minuteGoal;
+  final int minutesComplete;
+
+  const DailyProgress({
+    required this.isComplete,
+    required this.minuteGoal,
+    required this.minutesComplete,
+  });
+
+  factory DailyProgress.fromJson(Map<String, dynamic> json) {
+    return DailyProgress(
+      isComplete: json['is_complete'] as bool,
+      minuteGoal: json['minute_goal'] as int,
+      minutesComplete: json['minutes_complete'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'is_complete': isComplete,
+        'minute_goal': minuteGoal,
+        'minutes_complete': minutesComplete,
+      };
+}
+
+/// Overall (multi-day) progress for the active tourney.
+class OverallProgress {
+  final int dayNumber;
+  final int daysComplete;
+  final int daysGoal;
+  final bool isComplete;
+
+  const OverallProgress({
+    required this.dayNumber,
+    required this.daysComplete,
+    required this.daysGoal,
+    required this.isComplete,
+  });
+
+  factory OverallProgress.fromJson(Map<String, dynamic> json) {
+    return OverallProgress(
+      dayNumber: json['day_number'] as int,
+      daysComplete: json['days_complete'] as int,
+      daysGoal: json['days_goal'] as int,
+      isComplete: json['is_complete'] as bool,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'day_number': dayNumber,
+        'days_complete': daysComplete,
+        'days_goal': daysGoal,
+        'is_complete': isComplete,
+      };
+}
+
+/// The active tourney entity returned by `GET /tourney`.
+class Tourney {
+  final int id;
+  final String inviteCode;
+  final String name;
+  final DailyProgress dailyProgress;
+  final OverallProgress overallProgress;
+  final List<String> tauntMessages;
+
+  const Tourney({
+    required this.id,
+    required this.inviteCode,
+    required this.name,
+    required this.dailyProgress,
+    required this.overallProgress,
+    required this.tauntMessages,
+  });
+
+  factory Tourney.fromJson(Map<String, dynamic> json) {
+    return Tourney(
+      id: json['id'] as int,
+      inviteCode: json['invite_code'] as String,
+      name: json['name'] as String,
+      dailyProgress:
+          DailyProgress.fromJson(json['daily_progress'] as Map<String, dynamic>),
+      overallProgress: OverallProgress.fromJson(
+          json['overall_progress'] as Map<String, dynamic>),
+      tauntMessages: (json['taunt_messages'] as List)
+          .map((e) => e as String)
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'invite_code': inviteCode,
+        'name': name,
+        'daily_progress': dailyProgress.toJson(),
+        'overall_progress': overallProgress.toJson(),
+        'taunt_messages': tauntMessages,
+      };
+}
+
+// ---------------------------------------------------------------------------
+// Request bodies
+// ---------------------------------------------------------------------------
+
+/// Body for `POST /tourney`.
+class CreateTourneyRequest {
+  final String name;
+  final int dailyGoalMinutes;
+  final int overallGoalDays;
+
+  const CreateTourneyRequest({
+    required this.name,
+    required this.dailyGoalMinutes,
+    required this.overallGoalDays,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'daily_goal_minutes': dailyGoalMinutes,
+        'overall_goal_days': overallGoalDays,
+      };
+}
+
+/// Body for `POST /join_tourney`.
+class JoinTourneyRequest {
+  final String inviteCode;
+
+  const JoinTourneyRequest({required this.inviteCode});
+
+  Map<String, dynamic> toJson() => {'invite_code': inviteCode};
+}

@@ -7,7 +7,7 @@ import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../widgets/button.dart';
-import 'home_screen.dart';
+import 'main_navigation_screen.dart';
 import 'dragon_selection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen>
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (_) => HomeScreen(
+              builder: (_) => MainNavigationScreen(
                 user: authResponse.user,
                 token: authResponse.token,
               ),

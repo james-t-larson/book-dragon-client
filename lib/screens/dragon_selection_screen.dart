@@ -6,7 +6,7 @@ import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../widgets/button.dart';
-import 'home_screen.dart';
+import 'main_navigation_screen.dart';
 
 class DragonSelectionScreen extends StatefulWidget {
   final String token;
@@ -72,7 +72,7 @@ class _DragonSelectionScreenState extends State<DragonSelectionScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => HomeScreen(user: updatedUser, token: widget.token),
+            builder: (_) => MainNavigationScreen(user: updatedUser, token: widget.token),
           ),
           (_) => false,
         );

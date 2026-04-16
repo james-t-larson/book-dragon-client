@@ -7,7 +7,7 @@ import '../config/app_config.dart';
 import '../models/user.dart';
 import '../theme/app_theme.dart';
 import 'welcome_screen.dart';
-import 'home_screen.dart';
+import 'main_navigation_screen.dart';
 import 'dragon_selection_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => HomeScreen(user: user, token: token),
+              builder: (_) => MainNavigationScreen(user: user, token: token),
             ),
           );
         }
