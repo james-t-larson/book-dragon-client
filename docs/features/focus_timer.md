@@ -28,8 +28,9 @@ The Focus Timer acts as the core "game loop" of the app. It challenges the user 
 ## Technical Specifications
 
 ### Core Components
-- **Focus Timer Screen (`focus_timer_screen.dart`)**: A StatefulWidget implementing `WidgetsBindingObserver` to listen to app lifecycle changes. Utilizes a standard `Timer.periodic`. Features a drop-down menu populated by the user's active books array.
-- **Focus Lifecycle Management**: Crucial logic that aborts the timer and forfeits rewards if the UI is hidden or backgrounded.
+- **Focus Timer Screen (`focus_timer_screen.dart`)**: A StatefulWidget implementing `WidgetsBindingObserver`. It now autonomously fetches the user's active books list upon initialization.
+- **Add Book Dialog (`add_book_dialog.dart`)**: A reusable widget extracted to facilitate seamless onboarding. If a user enters the Focus Timer screen with no active books, this dialog is automatically triggered to ensure they can start reading immediately.
+- **Focus Lifecycle Management**: Logic that aborts the timer and forfeits rewards if the UI is hidden or backgrounded.
 
 ### Lifecycle State Management Diagram
 

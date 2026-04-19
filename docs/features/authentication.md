@@ -33,7 +33,7 @@ The Book Dragon client utilizes a token-based authentication mechanism. User tok
 2. If token is invalid or missing, route to `WelcomeScreen`.
 3. If token is valid, it calls `/auth/me` to fetch user details.
    - If the user `.dragon_id` is null/0, route to `DragonSelectionScreen`.
-   - Otherwise, route to `HomeScreen`.
+   - Otherwise, route to `MainNavigationScreen` (defaulting to the Home tab).
 
 ### API Mappings
 

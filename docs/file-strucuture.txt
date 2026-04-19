@@ -3,7 +3,8 @@
 │   ├── authentication.md
 │   ├── dragon_companion.md
 │   ├── focus_timer.md
-│   └── library_management.md
+│   ├── library_management.md
+│   └── tourney_hall.md
 ├── file-strucuture.txt
 ├── models
 │   └── data_models.md

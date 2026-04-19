@@ -36,6 +36,34 @@ The `Book` object (`lib/models/book.dart`) structures library data, effectively 
 | `readCount` | `int` | Tracks how many times the user has fully completed this volume. |
 | `reading` | `bool` | Status flag denoting active `currently_reading` state. Filters the library view. |
 
+### Tourney Model
+
+The `Tourney` object (`lib/models/tourney.dart`) represents an active reading challenge in the Tourney Hall.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `int` | Primary Key. |
+| `name` | `String` | The name of the tourney (e.g., "Grand Library Marathon"). |
+| `inviteCode` | `String` | Unique alphanumeric string used to invite others. |
+| `dailyProgress` | `DailyProgress` | Nested object tracking current day's progress. |
+| `overallProgress` | `OverallProgress` | Nested object tracking total duration progress. |
+| `tauntMessages` | `List<String>` | Cycling taunts issued by the knight if the goal is not met. |
+
+#### DailyProgress (Sub-model)
+| Field | Type | Description |
+|-------|------|-------------|
+| `isComplete` | `bool` | True if the daily reading minute goal is met. |
+| `minuteGoal` | `int` | The required minutes of focusing per day. |
+| `minutesComplete`| `int` | The actual minutes focused today. |
+
+#### OverallProgress (Sub-model)
+| Field | Type | Description |
+|-------|------|-------------|
+| `dayNumber` | `int` | The current day of the challenge (1-indexed). |
+| `daysComplete` | `int` | Total number of days where the daily goal was fully met. |
+| `daysGoal` | `int` | Total duration of the challenge in days. |
+| `isComplete` | `bool` | True if the final day has been reached. |
+
 ## Serialization
 Models implement standard Dart `fromJson` and `toJson` factory patterns for seamless HTTP layer translation. 
 

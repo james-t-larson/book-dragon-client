@@ -24,15 +24,17 @@ The "Dragon Companion" acts as the core gamification hook. By logging reading se
 ### Asset Mapping
 Asset references dynamically resolve using a helper `_dragonThemeColor` mapping to ensure the UI highlights match the user's chosen beast.
 
-| Dragon Color Enum | Hex Value | Sprite Path |
-|-------------------|-----------|-------------|
-| Red | `#CC3333` | `assets/images/dragons/sleeping/red.png` |
-| Blue | `#3388CC` | `assets/images/dragons/sleeping/blue.png` |
-| Green | `#408000` | `assets/images/dragons/sleeping/moss.png` |
-| Gold | `#D4AF37` | `assets/images/dragons/sleeping/gold.png` |
-| Pink | `#CC6699` | `assets/images/dragons/sleeping/pink.png` |
-| Purple | `#8844AA` | `assets/images/dragons/sleeping/purple.png` |
-| Teal | `#008080` | `assets/images/dragons/sleeping/teal.png` |
+| Dragon Variant | Hex Value | Asset Path Preview |
+|----------------|-----------|--------------------|
+| Red | `#CC3333` | `.../red.png` |
+| Blue | `#3388CC` | `.../blue.png` |
+| Moss | `#408000` | `.../moss.png` |
+| Gold | `#D4AF37` | `.../gold.png` |
+| Pink | `#CC6699` | `.../pink.png` |
+| White | `#FFFFFF` | `.../white.png` |
+
+> [!NOTE]
+> Each variant has both `sleeping` (for the Home screen) and `flying` (for the Tourney Hall) sprite variants stored under `assets/images/dragons/`.
 
 ### API Mappings
 

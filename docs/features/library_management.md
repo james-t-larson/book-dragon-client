@@ -5,10 +5,10 @@ The "Library" functions as the main dashboard and home screen for the user. It a
 
 ## User Stories
 
-### US-6: Empty Library State
-**As a** user with no active books,
-**I want to** be prompted directly to add a book from the main screen,
-**So that** I can easily begin tracking a new piece of literature.
+### US-6: Monitoring Progress
+**As a** user,
+**I want to** view my dragon companion and my current wealth at a glance,
+**So that** I feel a sense of progression in the overall gamified experience.
 
 ### US-7: Adding a New Book
 **As a** user starting a new text,
@@ -23,8 +23,7 @@ The "Library" functions as the main dashboard and home screen for the user. It a
 ## Technical Specifications
 
 ### Core Components
-- **Home Screen (`home_screen.dart`)**: Renders the local user `coins` to the top app bar. Dispatches API requests to fetch active books. Dynamically switches the primary CTA between "Add Book" and "Focus Time" based on inventory status.
-- **Add Book Modal**: An AlertDialog containing several text fields mapping to the `Book` domain model. Parses `String` inputs for page counts to safe integers.
+- **Home Screen (`home_screen.dart`)**: Acts as a passive dashboard. Renders the local user `coins` and total dragon level. The primary entry point for reading has been moved to the navigation bar to simplify the home interface.
 - **Dragon Art**: Instantiates the `DragonArt` widget passing in the user's color string, rendering it ambiently sitting in the lower third of the library scene.
 
 ### API Mappings
