@@ -31,9 +31,6 @@ class TourneyViewModel extends ChangeNotifier {
   Tourney? _activeTourney;
   Tourney? get activeTourney => _activeTourney;
 
-  TourneyConfig? _tourneyConfig;
-  TourneyConfig? get tourneyConfig => _tourneyConfig;
-
   int _currentTauntIndex = 0;
   int get currentTauntIndex => _currentTauntIndex;
 
@@ -105,20 +102,14 @@ class TourneyViewModel extends ChangeNotifier {
   // Actions
   // ---------------------------------------------------------------------------
 
-  /// Loads config constants and the active tourney in parallel.
+  /// Loads the active tourney.
   Future<void> fetchInitialData() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final results = await Future.wait([
-        _service.getConstants(),
-        _service.getActiveTourney(),
-      ]);
-
-      _tourneyConfig = results[0] as TourneyConfig;
-      _activeTourney = results[1] as Tourney?;
+      _activeTourney = await _service.getActiveTourney();
 
       if (hasActiveChallenge && !isDailyComplete) {
         startTauntCycle();

@@ -10,6 +10,7 @@ import 'package:book_dragon_client/models/user.dart';
 import 'package:book_dragon_client/screens/tourney_screen.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
 import 'package:book_dragon_client/widgets/chat_bubble.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -116,6 +117,9 @@ Widget _buildApp({
     return http.Response('', 404);
   });
 
+  // Initialize SharedPreferences with empty values for the test
+  SharedPreferences.setMockInitialValues({});
+
   // We need to inject the mock client into the TourneyScreen.
   // Since TourneyScreen creates its own ViewModel internally, we'll use
   // a _TestTourneyScreen that accepts a mock client for testability.
@@ -130,6 +134,17 @@ Widget _buildApp({
       ),
     ),
   );
+}
+
+/// Helper for pumping and waiting for both TourneyViewModel and ConstantsViewModel initialization.
+Future<void> _pumpAndSettle(WidgetTester tester) async {
+  await tester.pump();
+  // Allow time for SharedPreferences, fetchInitialData, and Bloc initialization
+  await tester.pump(const Duration(milliseconds: 100));
+  // Use a series of pumps instead of pumpAndSettle to avoid timing out on infinite animations.
+  for (int i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 /// Thin wrapper around TourneyScreen logic for testability.
@@ -179,8 +194,7 @@ void main() {
   group('No active challenge', () {
     testWidgets('shows plus button and no share button', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Plus button should be present
       expect(find.byKey(const Key('tourney_add_button')), findsOneWidget);
@@ -190,16 +204,14 @@ void main() {
 
     testWidgets('shows "Tourney Hall" title', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       expect(find.text('Tourney Hall'), findsOneWidget);
     });
 
     testWidgets('dragon asset is absent from widget tree', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Should not find the flying dragon image
       final flyingDragons = find.byWidgetPredicate(
@@ -216,12 +228,10 @@ void main() {
     testWidgets('tapping plus button opens JoinOrCreateDialog',
         (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Dialog should be visible with both tabs
       expect(find.text('Join Tourney'), findsOneWidget);
@@ -237,8 +247,7 @@ void main() {
   group('Active challenge', () {
     testWidgets('shows share button and no plus button', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: true));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       expect(find.byKey(const Key('tourney_share_button')), findsOneWidget);
       expect(find.byKey(const Key('tourney_add_button')), findsNothing);
@@ -249,16 +258,14 @@ void main() {
         hasActiveTourney: true,
         tourneyName: 'Summer Readers',
       ));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       expect(find.text('Summer Readers'), findsOneWidget);
     });
 
     testWidgets('shows progress bar', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: true));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
@@ -268,8 +275,7 @@ void main() {
         hasActiveTourney: true,
         dragonColor: 'moss',
       ));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Verify a flying dragon image is present
       final flyingDragons = find.byWidgetPredicate(
@@ -295,8 +301,7 @@ void main() {
         hasActiveTourney: true,
         dailyComplete: false,
       ));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Knight image or fallback icon should be present
       final knightImages = find.byWidgetPredicate(
@@ -324,8 +329,7 @@ void main() {
         hasActiveTourney: true,
         dailyComplete: true,
       ));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Chat bubble should NOT be present
       expect(find.byType(ChatBubble), findsNothing);
@@ -349,13 +353,11 @@ void main() {
   group('JoinOrCreateDialog rendering', () {
     testWidgets('Join tab has invite code text field', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Open dialog
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Join tab (default first tab)
       expect(find.text('Invite Code'), findsOneWidget);
@@ -364,18 +366,15 @@ void main() {
 
     testWidgets('Create tab has name field and dropdowns', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Open dialog
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Tap the Create tab
       await tester.tap(find.text('Create Tourney'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Verify form elements
       expect(find.text('Tournament Name'), findsOneWidget);
@@ -387,18 +386,15 @@ void main() {
     testWidgets('Start Challenge button is disabled when form empty',
         (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _pumpAndSettle(tester);
 
       // Open dialog
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Tap the Create tab
       await tester.tap(find.text('Create Tourney'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Find the Start Challenge button
       final startButton = find.widgetWithText(ElevatedButton, 'Start Challenge');

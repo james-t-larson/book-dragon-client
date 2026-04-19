@@ -48,8 +48,10 @@ class TourneyService {
     _checkUnauthorized(response);
 
     if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      // The response has a "tourney_config" key as per latest spec
       return TourneyConfig.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        data['tourney_config'] as Map<String, dynamic>,
       );
     }
     throw Exception('Failed to load tourney constants (${response.statusCode})');

@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../services/tourney_service.dart';
+import '../repositories/constants_repository.dart';
+import '../blocs/constants/constants_bloc.dart';
 import '../view_models/tourney_view_model.dart';
+import '../view_models/constants_view_model.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/join_or_create_dialog.dart';
 
@@ -32,8 +37,10 @@ class TourneyScreen extends StatefulWidget {
 class _TourneyScreenState extends State<TourneyScreen>
     with SingleTickerProviderStateMixin {
   late final TourneyViewModel _viewModel;
+  ConstantsViewModel? _constantsViewModel;
   late final AnimationController _dragonBobController;
   late final Animation<double> _dragonBobAnimation;
+  bool _isInitializingConstants = true;
 
   @override
   void initState() {
@@ -46,15 +53,31 @@ class _TourneyScreenState extends State<TourneyScreen>
       userDragonColor: widget.user.dragonColor ?? 'red',
     )..fetchInitialData();
 
+    _initConstants();
+
     // Gentle hovering animation for the flying dragon
     _dragonBobController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
-    )..repeat(reverse: true);
+    );
 
     _dragonBobAnimation = Tween<double>(begin: -10, end: 10).animate(
       CurvedAnimation(parent: _dragonBobController, curve: Curves.easeInOut),
     );
+  }
+
+  Future<void> _initConstants() async {
+    final prefs = await SharedPreferences.getInstance();
+    final service = TourneyService(token: widget.token, client: widget.httpClient);
+    final repository = ConstantsRepository(service: service, prefs: prefs);
+    final bloc = ConstantsBloc(repository: repository);
+    
+    if (mounted) {
+      setState(() {
+        _constantsViewModel = ConstantsViewModel(bloc: bloc)..loadConstants();
+        _isInitializingConstants = false;
+      });
+    }
   }
 
   @override
@@ -64,10 +87,13 @@ class _TourneyScreenState extends State<TourneyScreen>
     super.dispose();
   }
 
-  void _showJoinOrCreateDialog() {
+  void _showJoinOrCreateDialog(BuildContext context, TourneyViewModel vm, ConstantsViewModel cvm) {
     showDialog(
       context: context,
-      builder: (_) => JoinOrCreateDialog(viewModel: _viewModel),
+      builder: (_) => JoinOrCreateDialog(
+        viewModel: vm,
+        constantsViewModel: cvm,
+      ),
     );
   }
 
@@ -87,16 +113,39 @@ class _TourneyScreenState extends State<TourneyScreen>
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, _) {
-        return Scaffold(
-          backgroundColor: const Color(0xFF2E1C15),
-          extendBodyBehindAppBar: true,
-          appBar: _buildAppBar(),
-          body: _buildBody(context),
-        );
-      },
+    if (_isInitializingConstants || _constantsViewModel == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF2E1C15),
+        body: Center(child: CircularProgressIndicator(color: AppColors.shimmer)),
+      );
+    }
+
+    // Manage animation based on state
+    if (_viewModel.hasActiveChallenge) {
+      if (!_dragonBobController.isAnimating) {
+        _dragonBobController.repeat(reverse: true);
+      }
+    } else {
+      if (_dragonBobController.isAnimating) {
+        _dragonBobController.stop();
+      }
+    }
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _viewModel),
+        ChangeNotifierProvider.value(value: _constantsViewModel!),
+      ],
+      child: Consumer2<TourneyViewModel, ConstantsViewModel>(
+        builder: (context, vm, cvm, _) {
+          return Scaffold(
+            backgroundColor: const Color(0xFF2E1C15),
+            extendBodyBehindAppBar: true,
+            appBar: _buildAppBar(vm),
+            body: _buildBody(context, vm, cvm),
+          );
+        },
+      ),
     );
   }
 
@@ -104,18 +153,18 @@ class _TourneyScreenState extends State<TourneyScreen>
   // App Bar
   // ---------------------------------------------------------------------------
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(TourneyViewModel vm) {
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
-      title: _viewModel.hasActiveChallenge
+      title: vm.hasActiveChallenge
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _viewModel.activeTourney!.name,
+                  vm.activeTourney!.name,
                   style: GoogleFonts.medievalSharp(
                     fontSize: 20,
                     color: AppColors.shimmer,
@@ -127,7 +176,7 @@ class _TourneyScreenState extends State<TourneyScreen>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: LinearProgressIndicator(
-                      value: _viewModel.overallProgressPercentage,
+                      value: vm.overallProgressPercentage,
                       minHeight: 8,
                       backgroundColor: AppColors.surface,
                       valueColor: const AlwaysStoppedAnimation<Color>(
@@ -145,11 +194,11 @@ class _TourneyScreenState extends State<TourneyScreen>
               ),
             ),
       actions: [
-        if (!_viewModel.hasActiveChallenge)
+        if (!vm.hasActiveChallenge)
           IconButton(
             key: const Key('tourney_add_button'),
             icon: const Icon(Icons.add, color: AppColors.shimmer, size: 28),
-            onPressed: _showJoinOrCreateDialog,
+            onPressed: () => _showJoinOrCreateDialog(context, vm, _constantsViewModel!),
             tooltip: 'Join or Create Tourney',
           )
         else
@@ -168,7 +217,7 @@ class _TourneyScreenState extends State<TourneyScreen>
   // Body
   // ---------------------------------------------------------------------------
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildBody(BuildContext context, TourneyViewModel vm, ConstantsViewModel cvm) {
     final screenSize = MediaQuery.of(context).size;
 
     return Stack(
@@ -192,7 +241,7 @@ class _TourneyScreenState extends State<TourneyScreen>
         ),
 
         // Loading indicator
-        if (_viewModel.isLoading)
+        if (vm.isLoading || cvm.isLoading)
           const Center(
             child: CircularProgressIndicator(color: AppColors.shimmer),
           ),
@@ -200,7 +249,7 @@ class _TourneyScreenState extends State<TourneyScreen>
         // ---- Active challenge elements ----
 
         // Flying dragon (only when challenge is active)
-        if (_viewModel.hasActiveChallenge)
+        if (vm.hasActiveChallenge)
           Positioned(
             top: screenSize.height * 0.2,
             left: screenSize.width * 0.15,
@@ -223,7 +272,7 @@ class _TourneyScreenState extends State<TourneyScreen>
           ),
 
         // Knight + taunt bubble (only when challenge active & today incomplete)
-        if (_viewModel.hasActiveChallenge && !_viewModel.isDailyComplete) ...[
+        if (vm.hasActiveChallenge && !vm.isDailyComplete) ...[
           // Knight character
           Positioned(
             bottom: screenSize.height * 0.08,
@@ -242,43 +291,56 @@ class _TourneyScreenState extends State<TourneyScreen>
           ),
 
           // Taunt chat bubble above the knight
-          if (_viewModel.currentTaunt.isNotEmpty)
+          if (vm.currentTaunt.isNotEmpty)
             Positioned(
               bottom: screenSize.height * 0.32,
               right: screenSize.width * 0.02,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 400),
                 child: ChatBubble(
-                  key: ValueKey<String>(_viewModel.currentTaunt),
-                  text: _viewModel.currentTaunt,
+                  key: ValueKey<String>(vm.currentTaunt),
+                  text: vm.currentTaunt,
                 ),
               ),
             ),
         ],
 
-        // Error snackbar-like display
-        if (_viewModel.errorMessage != null)
+        // Error snackbar-like display (Tourney errors)
+        if (vm.errorMessage != null)
           Positioned(
             bottom: 20,
             left: 20,
             right: 20,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _viewModel.errorMessage!,
-                style: GoogleFonts.rosarivo(
-                  color: AppColors.onPrimary,
-                  fontSize: 13,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
+            child: _buildErrorBanner(vm.errorMessage!),
+          ),
+
+        // Error snackbar-like display (Constants errors)
+        if (cvm.errorMessage != null)
+          Positioned(
+            bottom: 80,
+            left: 20,
+            right: 20,
+            child: _buildErrorBanner(cvm.errorMessage!),
           ),
       ],
+    );
+  }
+
+  Widget _buildErrorBanner(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        message,
+        style: GoogleFonts.rosarivo(
+          color: AppColors.onPrimary,
+          fontSize: 13,
+        ),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }

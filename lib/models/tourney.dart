@@ -6,48 +6,7 @@
 // - POST /tourney → Tourney
 // - POST /join_tourney → Tourney
 
-// ---------------------------------------------------------------------------
-// Constants (dropdown options from GET /constants)
-// ---------------------------------------------------------------------------
-
-/// A single selectable option in a tourney configuration dropdown.
-class TourneyConfigOption {
-  final String label;
-  final int value;
-
-  const TourneyConfigOption({required this.label, required this.value});
-
-  factory TourneyConfigOption.fromJson(Map<String, dynamic> json) {
-    return TourneyConfigOption(
-      label: json['label'] as String,
-      value: json['value'] as int,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {'label': label, 'value': value};
-}
-
-/// Response shape from `GET /constants`.
-class TourneyConfig {
-  final List<TourneyConfigOption> overallGoalDays;
-  final List<TourneyConfigOption> dailyGoalMinutes;
-
-  const TourneyConfig({
-    required this.overallGoalDays,
-    required this.dailyGoalMinutes,
-  });
-
-  factory TourneyConfig.fromJson(Map<String, dynamic> json) {
-    return TourneyConfig(
-      overallGoalDays: (json['overall_goal_days'] as List)
-          .map((e) => TourneyConfigOption.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      dailyGoalMinutes: (json['daily_goal_minutes'] as List)
-          .map((e) => TourneyConfigOption.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-  }
-}
+export 'app_constants.dart';
 
 // ---------------------------------------------------------------------------
 // Tourney state (from GET /tourney)

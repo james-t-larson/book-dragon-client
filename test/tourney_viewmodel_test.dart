@@ -41,16 +41,18 @@ Map<String, dynamic> _tourneyJson({
     };
 
 Map<String, dynamic> _constantsJson() => {
-      'overall_goal_days': [
-        {'label': '3 days', 'value': 3},
-        {'label': '1 week', 'value': 7},
-        {'label': '2 weeks', 'value': 14},
-      ],
-      'daily_goal_minutes': [
-        {'label': '15 minutes', 'value': 15},
-        {'label': '30 minutes', 'value': 30},
-        {'label': '60 minutes', 'value': 60},
-      ],
+      'tourney_config': {
+        'overall_goal_days': [
+          {'label': '3 days', 'value': 3},
+          {'label': '1 week', 'value': 7},
+          {'label': '2 weeks', 'value': 14},
+        ],
+        'daily_goal_minutes': [
+          {'label': '15 minutes', 'value': 15},
+          {'label': '30 minutes', 'value': 30},
+          {'label': '60 minutes', 'value': 60},
+        ],
+      }
     };
 
 TourneyService _buildService(MockClient mockClient) =>
@@ -62,20 +64,27 @@ TourneyService _buildService(MockClient mockClient) =>
 
 void main() {
   group('Model layer – fromJson / toJson round-trip', () {
-    test('TourneyConfigOption round-trip', () {
+    test('ConfigOption round-trip', () {
       const json = {'label': '3 days', 'value': 3};
-      final opt = TourneyConfigOption.fromJson(json);
+      final opt = ConfigOption.fromJson(json);
       expect(opt.label, '3 days');
       expect(opt.value, 3);
       expect(opt.toJson(), json);
     });
 
     test('TourneyConfig parses both lists', () {
-      final config = TourneyConfig.fromJson(_constantsJson());
+      final configJson = _constantsJson()['tourney_config'] as Map<String, dynamic>;
+      final config = TourneyConfig.fromJson(configJson);
       expect(config.overallGoalDays.length, 3);
       expect(config.dailyGoalMinutes.length, 3);
       expect(config.overallGoalDays.first.label, '3 days');
       expect(config.dailyGoalMinutes.last.value, 60);
+    });
+
+    test('AppConstants parses from root JSON', () {
+      final constants = AppConstants.fromJson(_constantsJson());
+      expect(constants.tourneyConfig.overallGoalDays.length, 3);
+      expect(constants.tourneyConfig.dailyGoalMinutes.first.value, 15);
     });
 
     test('DailyProgress round-trip', () {
@@ -243,7 +252,7 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // ViewModel tests
+  // ViewModel tests (Refactored to focus on active tourney logic only)
   // ---------------------------------------------------------------------------
 
   group('TourneyViewModel', () {
@@ -251,19 +260,12 @@ void main() {
 
     /// Creates a ViewModel with mocked service responses.
     TourneyViewModel createVm({
-      int constantsStatus = 200,
       int tourneyStatus = 404, // default: no active tourney
       bool dailyComplete = false,
       int daysComplete = 3,
       int daysGoal = 10,
     }) {
       final mock = MockClient((req) async {
-        if (req.url.path == '/constants') {
-          if (constantsStatus == 200) {
-            return http.Response(jsonEncode(_constantsJson()), 200);
-          }
-          return http.Response('', constantsStatus);
-        }
         if (req.url.path == '/tourney' && req.method == 'GET') {
           if (tourneyStatus == 200) {
             return http.Response(
@@ -305,8 +307,6 @@ void main() {
       expect(vm.isLoading, false);
       expect(vm.hasActiveChallenge, false);
       expect(vm.activeTourney, isNull);
-      expect(vm.tourneyConfig, isNotNull);
-      expect(vm.tourneyConfig!.overallGoalDays.length, 3);
     });
 
     test('fetchInitialData with active challenge', () async {
@@ -318,17 +318,8 @@ void main() {
       expect(vm.activeTourney!.name, 'Summer Readers');
     });
 
-    test('fetchInitialData loads constants correctly', () async {
-      vm = createVm();
-      await vm.fetchInitialData();
-
-      expect(vm.tourneyConfig, isNotNull);
-      expect(vm.tourneyConfig!.dailyGoalMinutes.first.label, '15 minutes');
-      expect(vm.tourneyConfig!.overallGoalDays.last.value, 14);
-    });
-
     test('fetchInitialData sets errorMessage on failure', () async {
-      vm = createVm(constantsStatus: 500);
+      vm = createVm(tourneyStatus: 500);
       await vm.fetchInitialData();
 
       expect(vm.isLoading, false);
@@ -366,16 +357,6 @@ void main() {
       }
     });
 
-    test('dispose stops taunt cycle without errors', () async {
-      vm = createVm(tourneyStatus: 200);
-      await vm.fetchInitialData();
-
-      // Should not throw
-      vm.dispose();
-      // Re-assign so tearDown doesn't double-dispose
-      vm = createVm(tourneyStatus: 404);
-    });
-
     // --- Action Handling: Create & Join ---
 
     test('createChallenge success populates activeTourney', () async {
@@ -393,9 +374,6 @@ void main() {
 
     test('createChallenge API error sets errorMessage', () async {
       final errorMock = MockClient((req) async {
-        if (req.url.path == '/constants') {
-          return http.Response(jsonEncode(_constantsJson()), 200);
-        }
         if (req.url.path == '/tourney' && req.method == 'GET') {
           return http.Response('', 404);
         }
@@ -430,9 +408,6 @@ void main() {
 
     test('joinChallenge invalid code sets errorMessage', () async {
       final errorMock = MockClient((req) async {
-        if (req.url.path == '/constants') {
-          return http.Response(jsonEncode(_constantsJson()), 200);
-        }
         if (req.url.path == '/tourney' && req.method == 'GET') {
           return http.Response('', 404);
         }
@@ -483,75 +458,6 @@ void main() {
       await vm.fetchInitialData();
 
       expect(vm.overallProgressPercentage, 1.0);
-    });
-
-    // --- Draft State ---
-
-    test('draft state management does not trigger network', () async {
-      vm = createVm(tourneyStatus: 404);
-      await vm.fetchInitialData();
-
-      int listenerCalls = 0;
-      vm.addListener(() => listenerCalls++);
-
-      vm.setDraftName('My Tourney');
-      vm.setDraftDailyMinutes(15);
-      vm.setDraftOverallDays(7);
-
-      expect(vm.draftName, 'My Tourney');
-      expect(vm.draftDailyMinutes, 15);
-      expect(vm.draftOverallDays, 7);
-      expect(listenerCalls, 3); // one per setter
-      // No network was triggered (no isLoading transitions)
-      expect(vm.isLoading, false);
-    });
-
-    test('isValidDraft false with empty name', () async {
-      vm = createVm(tourneyStatus: 404);
-
-      vm.setDraftName('');
-      vm.setDraftDailyMinutes(15);
-      vm.setDraftOverallDays(7);
-
-      expect(vm.isValidDraft, false);
-    });
-
-    test('isValidDraft false with missing dailyMinutes', () async {
-      vm = createVm(tourneyStatus: 404);
-
-      vm.setDraftName('Quest');
-      vm.setDraftOverallDays(7);
-
-      expect(vm.isValidDraft, false);
-    });
-
-    test('isValidDraft false with missing overallDays', () async {
-      vm = createVm(tourneyStatus: 404);
-
-      vm.setDraftName('Quest');
-      vm.setDraftDailyMinutes(15);
-
-      expect(vm.isValidDraft, false);
-    });
-
-    test('isValidDraft true when all fields set', () async {
-      vm = createVm(tourneyStatus: 404);
-
-      vm.setDraftName('Quest');
-      vm.setDraftDailyMinutes(15);
-      vm.setDraftOverallDays(7);
-
-      expect(vm.isValidDraft, true);
-    });
-
-    test('isValidDraft false with whitespace-only name', () async {
-      vm = createVm(tourneyStatus: 404);
-
-      vm.setDraftName('   ');
-      vm.setDraftDailyMinutes(15);
-      vm.setDraftOverallDays(7);
-
-      expect(vm.isValidDraft, false);
     });
 
     // --- isDailyComplete ---

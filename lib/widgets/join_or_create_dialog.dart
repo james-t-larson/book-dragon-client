@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../view_models/tourney_view_model.dart';
+import '../view_models/constants_view_model.dart';
 import '../widgets/button.dart';
 
 /// A tabbed dialog for joining or creating a tourney challenge.
@@ -12,8 +14,13 @@ import '../widgets/button.dart';
 ///   2. **Create Tourney** – name field, two dropdowns, Start button.
 class JoinOrCreateDialog extends StatefulWidget {
   final TourneyViewModel viewModel;
+  final ConstantsViewModel constantsViewModel;
 
-  const JoinOrCreateDialog({super.key, required this.viewModel});
+  const JoinOrCreateDialog({
+    super.key,
+    required this.viewModel,
+    required this.constantsViewModel,
+  });
 
   @override
   State<JoinOrCreateDialog> createState() => _JoinOrCreateDialogState();
@@ -42,6 +49,7 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
   @override
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
+    final cvm = widget.constantsViewModel;
 
     return Dialog(
       backgroundColor: AppColors.surface,
@@ -105,7 +113,7 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
               controller: _tabController,
               children: [
                 _buildJoinTab(vm),
-                _buildCreateTab(vm),
+                _buildCreateTab(vm, cvm),
               ],
             ),
           ),
@@ -206,150 +214,156 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
   // Create tab
   // ---------------------------------------------------------------------------
 
-  Widget _buildCreateTab(TourneyViewModel vm) {
+  Widget _buildCreateTab(TourneyViewModel vm, ConstantsViewModel cvm) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SingleChildScrollView(
-        child: ListenableBuilder(
-          listenable: vm,
-          builder: (context, _) {
-            return Column(
-              children: [
-                const SizedBox(height: 12),
-                // Tournament Name
-                TextField(
-                  controller: _nameController,
-                  style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                  onChanged: vm.setDraftName,
-                  decoration: InputDecoration(
-                    labelText: 'Tournament Name',
-                    labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
-                    prefixIcon: const Icon(Icons.flag,
-                        color: AppColors.secondaryLight),
-                    filled: true,
-                    fillColor: AppColors.background.withValues(alpha: 0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.secondary, width: 2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Daily Commitment dropdown
-                DropdownButtonFormField<int>(
-                  initialValue: vm.draftDailyMinutes,
-                  dropdownColor: AppColors.surface,
-                  style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Daily Commitment',
-                    labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
-                    prefixIcon: const Icon(Icons.timer,
-                        color: AppColors.secondaryLight),
-                    filled: true,
-                    fillColor: AppColors.background.withValues(alpha: 0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  items: vm.tourneyConfig?.dailyGoalMinutes
-                          .map((opt) => DropdownMenuItem(
-                                value: opt.value,
-                                child: Text(opt.label),
-                              ))
-                          .toList() ??
-                      [],
-                  onChanged: vm.setDraftDailyMinutes,
-                ),
-                const SizedBox(height: 16),
-
-                // Overall Duration dropdown
-                DropdownButtonFormField<int>(
-                  initialValue: vm.draftOverallDays,
-                  dropdownColor: AppColors.surface,
-                  style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Overall Duration',
-                    labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
-                    prefixIcon: const Icon(Icons.calendar_today,
-                        color: AppColors.secondaryLight),
-                    filled: true,
-                    fillColor: AppColors.background.withValues(alpha: 0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  items: vm.tourneyConfig?.overallGoalDays
-                          .map((opt) => DropdownMenuItem(
-                                value: opt.value,
-                                child: Text(opt.label),
-                              ))
-                          .toList() ??
-                      [],
-                  onChanged: vm.setDraftOverallDays,
-                ),
-                const SizedBox(height: 20),
-
-                // Start Challenge button
-                AppButton(
-                  onPressed: (vm.isValidDraft && !vm.isLoading)
-                      ? () async {
-                          final navigator = Navigator.of(context);
-                          await vm.createChallenge(
-                            vm.draftName,
-                            vm.draftDailyMinutes!,
-                            vm.draftOverallDays!,
-                          );
-                          if (vm.hasActiveChallenge && mounted) {
-                            navigator.pop();
-                          }
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    disabledBackgroundColor:
-                        AppColors.primary.withValues(alpha: 0.3),
-                  ),
-                  child: vm.isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.onPrimary,
-                          ),
-                        )
-                      : Text(
-                          'Start Challenge',
-                          style: GoogleFonts.medievalSharp(
-                            color: AppColors.onPrimary,
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-
-                if (vm.errorMessage != null) ...[
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: vm),
+            ChangeNotifierProvider.value(value: cvm),
+          ],
+          child: Consumer2<TourneyViewModel, ConstantsViewModel>(
+            builder: (context, vm, cvm, _) {
+              final constants = cvm.tourneyConfig;
+              return Column(
+                children: [
                   const SizedBox(height: 12),
-                  Text(
-                    vm.errorMessage!,
-                    style: GoogleFonts.rosarivo(
-                      fontSize: 12,
-                      color: AppColors.primaryLight,
+                  // Tournament Name
+                  TextField(
+                    controller: _nameController,
+                    style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                    onChanged: vm.setDraftName,
+                    decoration: InputDecoration(
+                      labelText: 'Tournament Name',
+                      labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
+                      prefixIcon: const Icon(Icons.flag,
+                          color: AppColors.secondaryLight),
+                      filled: true,
+                      fillColor: AppColors.background.withValues(alpha: 0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: AppColors.secondary, width: 2),
+                      ),
                     ),
-                    textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 16),
+
+                  // Daily Commitment dropdown
+                  DropdownButtonFormField<int>(
+                    initialValue: vm.draftDailyMinutes,
+                    dropdownColor: AppColors.surface,
+                    style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                    decoration: InputDecoration(
+                      labelText: 'Daily Commitment',
+                      labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
+                      prefixIcon: const Icon(Icons.timer,
+                          color: AppColors.secondaryLight),
+                      filled: true,
+                      fillColor: AppColors.background.withValues(alpha: 0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    items: constants?.dailyGoalMinutes
+                            .map((opt) => DropdownMenuItem(
+                                  value: opt.value,
+                                  child: Text(opt.label),
+                                ))
+                            .toList() ??
+                        [],
+                    onChanged: vm.setDraftDailyMinutes,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Overall Duration dropdown
+                  DropdownButtonFormField<int>(
+                    initialValue: vm.draftOverallDays,
+                    dropdownColor: AppColors.surface,
+                    style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                    decoration: InputDecoration(
+                      labelText: 'Overall Duration',
+                      labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
+                      prefixIcon: const Icon(Icons.calendar_today,
+                          color: AppColors.secondaryLight),
+                      filled: true,
+                      fillColor: AppColors.background.withValues(alpha: 0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    items: constants?.overallGoalDays
+                            .map((opt) => DropdownMenuItem(
+                                  value: opt.value,
+                                  child: Text(opt.label),
+                                ))
+                            .toList() ??
+                        [],
+                    onChanged: vm.setDraftOverallDays,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Start Challenge button
+                  AppButton(
+                    onPressed: (vm.isValidDraft && !vm.isLoading)
+                        ? () async {
+                            final navigator = Navigator.of(context);
+                            await vm.createChallenge(
+                              vm.draftName,
+                              vm.draftDailyMinutes!,
+                              vm.draftOverallDays!,
+                            );
+                            if (vm.hasActiveChallenge && mounted) {
+                              navigator.pop();
+                            }
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor:
+                          AppColors.primary.withValues(alpha: 0.3),
+                    ),
+                    child: vm.isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.onPrimary,
+                            ),
+                          )
+                        : Text(
+                            'Start Challenge',
+                            style: GoogleFonts.medievalSharp(
+                              color: AppColors.onPrimary,
+                              fontSize: 16,
+                            ),
+                          ),
+                  ),
+
+                  if (vm.errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      vm.errorMessage!,
+                      style: GoogleFonts.rosarivo(
+                        fontSize: 12,
+                        color: AppColors.primaryLight,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
                 ],
-                const SizedBox(height: 8),
-              ],
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
