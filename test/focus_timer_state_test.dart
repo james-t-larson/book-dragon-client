@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:book_dragon_client/screens/focus_timer_screen.dart';
-import 'package:book_dragon_client/models/user.dart';
 import 'package:flutter/services.dart';
-import 'package:book_dragon_client/models/book.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:book_dragon_client/models/user.dart';
+import 'package:book_dragon_client/screens/focus_timer_screen.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
 
 class TestAssetBundle extends CachingAssetBundle {
@@ -21,7 +23,6 @@ class TestAssetBundle extends CachingAssetBundle {
 
 void main() {
   late User dummyUser;
-  late Book dummyBook;
 
   setUp(() {
     dummyUser = User(
@@ -33,16 +34,21 @@ void main() {
       dragonColor: 'red',
       dragonId: 1,
     );
+  });
 
-    dummyBook = Book(
-      id: 1,
-      title: 'Test Scroll',
-      author: 'Test Author',
-      totalPages: 100,
-      currentPage: 10,
-      reading: true,
-      readCount: 0,
-    );
+  final mockClient = MockClient((req) async {
+    if (req.url.path.contains('/books')) {
+      return http.Response(jsonEncode([{
+        'id': 1,
+        'title': 'Test Scroll',
+        'author': 'Test Author',
+        'genre': 'Test Genre',
+        'total_pages': 100,
+        'current_page': 50,
+        'reading': true,
+      }]), 200);
+    }
+    return http.Response('', 404);
   });
 
   group('Focus Timer States Content', () {
@@ -57,10 +63,14 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
+              httpClient: mockClient,
             ),
           ),
         ),
       );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify Configuration state options are present
       expect(find.text('Chosen Scroll'), findsOneWidget);
@@ -81,10 +91,14 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
+              httpClient: mockClient,
             ),
           ),
         ),
       );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       await tester.tap(find.text('Start Focus'));
       await tester.pumpAndSettle();
@@ -107,10 +121,14 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
+              httpClient: mockClient,
             ),
           ),
         ),
       );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       await tester.tap(find.text('Start Focus'));
       await tester.pumpAndSettle();
@@ -134,10 +152,14 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
+              httpClient: mockClient,
             ),
           ),
         ),
       );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       await tester.tap(find.text('Start Focus'));
       await tester.pumpAndSettle();
@@ -171,10 +193,14 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
+              httpClient: mockClient,
             ),
           ),
         ),
       );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Start Focus immediately (warning is hidden)
       await tester.tap(find.text('Start Focus'));

@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:book_dragon_client/models/user.dart';
-import 'package:book_dragon_client/models/book.dart';
 import 'package:book_dragon_client/screens/welcome_screen.dart';
 import 'package:book_dragon_client/screens/splash_screen.dart';
 import 'package:book_dragon_client/screens/dragon_selection_screen.dart';
@@ -59,6 +61,18 @@ void main() {
       expect(find.byType(Image), findsWidgets);
     });
 
+    final mockClient = MockClient((req) async {
+      return http.Response(jsonEncode([{
+        'id': 1,
+        'title': 'Test Scroll',
+        'author': 'Test Author',
+        'genre': 'Test Genre',
+        'total_pages': 100,
+        'current_page': 50,
+        'reading': true,
+      }]), 200);
+    });
+
     for (final color in allColors) {
       testWidgets('DragonArt widget renders successfully for color: $color', (tester) async {
         await tester.pumpWidget(
@@ -74,16 +88,17 @@ void main() {
 
       testWidgets('FocusTimerScreen renders its dragon successfully for color: $color', (tester) async {
         final user = createDummyUser(color);
-        final book = Book(id: 1, title: 'Test Book', totalPages: 100, currentPage: 0);
 
         await tester.pumpWidget(
           MaterialApp(
             home: FocusTimerScreen(
               user: user,
               token: 'fake_token',
+              httpClient: mockClient,
             )
           )
         );
+        await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
         expect(find.byType(Image), findsWidgets);
       });

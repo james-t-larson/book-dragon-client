@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
@@ -15,8 +16,14 @@ import '../widgets/join_or_create_dialog.dart';
 class TourneyScreen extends StatefulWidget {
   final User user;
   final String token;
+  final http.Client? httpClient;
 
-  const TourneyScreen({super.key, required this.user, required this.token});
+  const TourneyScreen({
+    super.key,
+    required this.user,
+    required this.token,
+    this.httpClient,
+  });
 
   @override
   State<TourneyScreen> createState() => _TourneyScreenState();
@@ -32,7 +39,10 @@ class _TourneyScreenState extends State<TourneyScreen>
   void initState() {
     super.initState();
     _viewModel = TourneyViewModel(
-      service: TourneyService(token: widget.token),
+      service: TourneyService(
+        token: widget.token,
+        client: widget.httpClient,
+      ),
       userDragonColor: widget.user.dragonColor ?? 'red',
     )..fetchInitialData();
 

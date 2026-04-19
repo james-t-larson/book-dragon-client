@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../models/book.dart';
 import '../widgets/button.dart';
+import '../widgets/add_book_dialog.dart';
 
 class FocusTimerScreen extends StatefulWidget {
   final User user;
@@ -18,11 +19,19 @@ class FocusTimerScreen extends StatefulWidget {
   /// (e.g., dismissed the add-book dialog without adding a scroll).
   final VoidCallback? onNavigateBack;
 
+  /// Whether this tab is currently the active view (for dialog triggering).
+  final bool isActive;
+
+  /// Optional HTTP client for dependency injection (testing).
+  final http.Client? httpClient;
+
   const FocusTimerScreen({
     super.key,
     required this.user,
     required this.token,
     this.onNavigateBack,
+    this.isActive = true,
+    this.httpClient,
   });
 
   @override
@@ -49,7 +58,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     WidgetsBinding.instance.addObserver(this);
     _currentCoins = widget.user.coins;
     _remainingSeconds = _selectedMinutes * 60;
-    _fetchActiveBooks(promptIfEmpty: true);
+    _fetchActiveBooks(promptIfEmpty: false);
   }
 
   @override
@@ -205,7 +214,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     if (newPage == null) return;
 
     try {
-      final response = await http.post(
+      final client = widget.httpClient ?? http.Client();
+      final response = await client.post(
         Uri.parse('${AppConfig.baseUrl}/focus_timer_complete'),
         headers: {
           'Content-Type': 'application/json',
@@ -337,7 +347,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   Future<void> _fetchActiveBooks({bool promptIfEmpty = false}) async {
     setState(() => _isFetchingBooks = true);
     try {
-      final response = await http.get(
+      final client = widget.httpClient ?? http.Client();
+      final response = await client.get(
         Uri.parse('${AppConfig.baseUrl}/books?currently_reading=true'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
@@ -368,140 +379,11 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     }
   }
 
-  /// Displays a modal dialog prompting the user to add their first scroll.
-  ///
-  /// On success → shows [_showBeginReadingDialog].
-  /// On dismiss → calls [widget.onNavigateBack] to return to the Home tab.
-  Future<void> _showAddFirstBookDialog() async {
-    final titleController = TextEditingController();
-    final authorController = TextEditingController();
-    final totalPagesController = TextEditingController();
-    final currentPageController = TextEditingController();
-    final genreController = TextEditingController();
-
-    final added = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 12.0, vertical: 24.0),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Add a Scroll to Begin',
-                  style: GoogleFonts.medievalSharp(
-                    color: AppColors.onSurface,
-                    fontSize: 22,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close, color: AppColors.muted),
-                onPressed: () => Navigator.pop(dialogContext, false),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: MediaQuery.of(dialogContext).size.width,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'You need a scroll in your library before you can '
-                    'begin a focus session.',
-                    style: GoogleFonts.rosarivo(
-                      fontSize: 13,
-                      color: AppColors.muted,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDialogTextField(
-                      titleController, 'Title', Icons.book),
-                  _buildDialogTextField(
-                      authorController, 'Author', Icons.person),
-                  _buildDialogTextField(
-                      genreController, 'Genre', Icons.category),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildDialogTextField(
-                          totalPagesController,
-                          'Total Pages',
-                          Icons.pages,
-                          isNumber: true,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildDialogTextField(
-                          currentPageController,
-                          'Current Page',
-                          Icons.edit_note,
-                          isNumber: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            AppButton(
-              onPressed: () async {
-                if (titleController.text.isEmpty) return;
-                final newBook = Book(
-                  id: 0,
-                  title: titleController.text,
-                  author: authorController.text,
-                  genre: genreController.text,
-                  totalPages:
-                      int.tryParse(totalPagesController.text) ?? 0,
-                  currentPage:
-                      int.tryParse(currentPageController.text) ?? 0,
-                  reading: true,
-                );
-                await _addFirstBook(newBook);
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext, _activeBooks.isNotEmpty);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _dragonThemeColor,
-              ),
-              child: Text(
-                'Add Scroll',
-                style: GoogleFonts.medievalSharp(
-                  color: AppColors.onPrimary,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (!mounted) return;
-
-    if (added == true && _activeBooks.isNotEmpty) {
-      _showBeginReadingDialog(_activeBooks.first);
-    } else {
-      widget.onNavigateBack?.call();
-    }
-  }
-
   /// POSTs a new book to the server and re-fetches the active books list.
-  Future<void> _addFirstBook(Book book) async {
+  Future<bool> _addFirstBook(Book book) async {
     try {
-      final response = await http.post(
+      final client = widget.httpClient ?? http.Client();
+      final response = await client.post(
         Uri.parse('${AppConfig.baseUrl}/books'),
         headers: {
           'Content-Type': 'application/json',
@@ -512,96 +394,46 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         await _fetchActiveBooks();
+        return true;
       }
+      return false;
     } catch (e) {
       if (mounted) {
         _showError('Failed to add scroll. Please try again.');
       }
+      return false;
     }
   }
 
-  /// Follow-up dialog asking if the user wants to start reading immediately.
-  void _showBeginReadingDialog(Book book) {
-    showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text(
-            'Begin Reading?',
-            style: GoogleFonts.medievalSharp(color: AppColors.onSurface),
-          ),
-          content: Text(
-            'Would you like to start a focus session with '
-            '"${book.title}" now?',
-            style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-          ),
-          actions: [
-            AppButton.text(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-                widget.onNavigateBack?.call();
-              },
-              child: Text(
-                'Not Now',
-                style: GoogleFonts.rosarivo(
-                  color: AppColors.secondaryLight,
-                ),
-              ),
-            ),
-            AppButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-                // Book is already selected; user stays on timer screen
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _dragonThemeColor,
-              ),
-              child: Text(
-                'Start Reading',
-                style: GoogleFonts.medievalSharp(
-                  color: AppColors.onPrimary,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  /// Handles the 'Start Focus' button click, checking for an active book.
+  void _handleStartFocus() {
+    if (_selectedBook != null) {
+      _startTimer();
+    } else {
+      _showAddFirstBookDialog();
+    }
   }
 
-  Widget _buildDialogTextField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    bool isNumber = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextField(
-        controller: controller,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
-          prefixIcon: Icon(icon, color: AppColors.secondaryLight),
-          filled: true,
-          fillColor: AppColors.background.withValues(alpha: 0.5),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: AppColors.primary, width: 2),
-          ),
-        ),
-      ),
+  /// Shows the add book dialog and handles the result.
+  Future<void> _showAddFirstBookDialog() async {
+    final Book? newBook = await showDialog<Book>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AddBookDialog(themeColor: _dragonThemeColor),
     );
+
+    if (newBook != null && mounted) {
+      final success = await _addFirstBook(newBook);
+      if (success && mounted) {
+        // Automatically start the timer after successful addition
+        _startTimer();
+      }
+    } else if (mounted && _activeBooks.isEmpty) {
+      // If they cancelled and still have no books, navigate back
+      widget.onNavigateBack?.call();
+    }
   }
+
 
   String? get _dragonSpritePath {
     final color = widget.user.dragonColor?.toLowerCase();
@@ -915,7 +747,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                 child: AppButton(
                   onPressed: _isRunning
                       ? () => _cancelTimer()
-                      : (_selectedBook != null ? _startTimer : null),
+                      : _handleStartFocus,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _isRunning
                         ? AppColors.primary

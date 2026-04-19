@@ -162,6 +162,7 @@ class _TestTourneyScreenState extends State<_TestTourneyScreen> {
     return TourneyScreen(
       user: widget.user,
       token: widget.token,
+      httpClient: widget.mockClient,
     );
   }
 }
@@ -178,7 +179,8 @@ void main() {
   group('No active challenge', () {
     testWidgets('shows plus button and no share button', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Plus button should be present
       expect(find.byKey(const Key('tourney_add_button')), findsOneWidget);
@@ -188,14 +190,16 @@ void main() {
 
     testWidgets('shows "Tourney Hall" title', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Tourney Hall'), findsOneWidget);
     });
 
     testWidgets('dragon asset is absent from widget tree', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Should not find the flying dragon image
       final flyingDragons = find.byWidgetPredicate(
@@ -212,10 +216,12 @@ void main() {
     testWidgets('tapping plus button opens JoinOrCreateDialog',
         (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Dialog should be visible with both tabs
       expect(find.text('Join Tourney'), findsOneWidget);
@@ -231,7 +237,8 @@ void main() {
   group('Active challenge', () {
     testWidgets('shows share button and no plus button', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: true));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byKey(const Key('tourney_share_button')), findsOneWidget);
       expect(find.byKey(const Key('tourney_add_button')), findsNothing);
@@ -242,14 +249,16 @@ void main() {
         hasActiveTourney: true,
         tourneyName: 'Summer Readers',
       ));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Summer Readers'), findsOneWidget);
     });
 
     testWidgets('shows progress bar', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: true));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
@@ -259,7 +268,8 @@ void main() {
         hasActiveTourney: true,
         dragonColor: 'moss',
       ));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify a flying dragon image is present
       final flyingDragons = find.byWidgetPredicate(
@@ -285,7 +295,8 @@ void main() {
         hasActiveTourney: true,
         dailyComplete: false,
       ));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Knight image or fallback icon should be present
       final knightImages = find.byWidgetPredicate(
@@ -313,7 +324,8 @@ void main() {
         hasActiveTourney: true,
         dailyComplete: true,
       ));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Chat bubble should NOT be present
       expect(find.byType(ChatBubble), findsNothing);
@@ -337,11 +349,13 @@ void main() {
   group('JoinOrCreateDialog rendering', () {
     testWidgets('Join tab has invite code text field', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Open dialog
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Join tab (default first tab)
       expect(find.text('Invite Code'), findsOneWidget);
@@ -350,15 +364,18 @@ void main() {
 
     testWidgets('Create tab has name field and dropdowns', (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Open dialog
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Tap the Create tab
       await tester.tap(find.text('Create Tourney'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify form elements
       expect(find.text('Tournament Name'), findsOneWidget);
@@ -370,15 +387,18 @@ void main() {
     testWidgets('Start Challenge button is disabled when form empty',
         (tester) async {
       await tester.pumpWidget(_buildApp(hasActiveTourney: false));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Open dialog
       await tester.tap(find.byKey(const Key('tourney_add_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Tap the Create tab
       await tester.tap(find.text('Create Tourney'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Find the Start Challenge button
       final startButton = find.widgetWithText(ElevatedButton, 'Start Challenge');
@@ -407,7 +427,11 @@ void main() {
       );
 
       expect(find.text('Hello, squire!'), findsOneWidget);
-      expect(find.byType(CustomPaint), findsOneWidget); // tail painter
+      // We expect at least one CustomPaint (the tail), but we allow more from the environment
+      expect(find.descendant(
+        of: find.byType(ChatBubble),
+        matching: find.byType(CustomPaint),
+      ), findsOneWidget);
     });
   });
 }

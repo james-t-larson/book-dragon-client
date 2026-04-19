@@ -1,0 +1,386 @@
+.
+├── features
+│   ├── authentication.md
+│   ├── dragon_companion.md
+│   ├── focus_timer.md
+│   └── library_management.md
+├── file-strucuture.txt
+├── models
+│   └── data_models.md
+└── overview.md
+
+3 directories, 7 files
+../
+├── analysis_options.yaml
+├── android
+│   ├── app
+│   │   ├── build.gradle.kts
+│   │   └── src
+│   │       ├── debug
+│   │       │   └── AndroidManifest.xml
+│   │       ├── main
+│   │       │   ├── AndroidManifest.xml
+│   │       │   ├── java
+│   │       │   │   └── io
+│   │       │   │       └── flutter
+│   │       │   │           └── plugins
+│   │       │   │               └── GeneratedPluginRegistrant.java
+│   │       │   ├── kotlin
+│   │       │   │   └── com
+│   │       │   │       └── bookdragon
+│   │       │   │           └── book_dragon_client
+│   │       │   │               └── MainActivity.kt
+│   │       │   └── res
+│   │       │       ├── drawable
+│   │       │       │   └── launch_background.xml
+│   │       │       ├── drawable-hdpi
+│   │       │       │   └── ic_launcher_foreground.png
+│   │       │       ├── drawable-mdpi
+│   │       │       │   └── ic_launcher_foreground.png
+│   │       │       ├── drawable-v21
+│   │       │       │   └── launch_background.xml
+│   │       │       ├── drawable-xhdpi
+│   │       │       │   └── ic_launcher_foreground.png
+│   │       │       ├── drawable-xxhdpi
+│   │       │       │   └── ic_launcher_foreground.png
+│   │       │       ├── drawable-xxxhdpi
+│   │       │       │   └── ic_launcher_foreground.png
+│   │       │       ├── mipmap-anydpi-v26
+│   │       │       │   └── ic_launcher.xml
+│   │       │       ├── mipmap-hdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-mdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-xhdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-xxhdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-xxxhdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── values
+│   │       │       │   ├── colors.xml
+│   │       │       │   └── styles.xml
+│   │       │       └── values-night
+│   │       │           └── styles.xml
+│   │       └── profile
+│   │           └── AndroidManifest.xml
+│   ├── book_dragon_client_android.iml
+│   ├── build.gradle.kts
+│   ├── gradle
+│   │   └── wrapper
+│   │       ├── gradle-wrapper.jar
+│   │       └── gradle-wrapper.properties
+│   ├── gradle.properties
+│   ├── gradlew
+│   ├── gradlew.bat
+│   ├── local.properties
+│   └── settings.gradle.kts
+├── assets
+│   └── images
+│       ├── appicon.png
+│       ├── characters
+│       │   └── knight.png
+│       ├── dragons
+│       │   ├── flying
+│       │   │   ├── blue.png
+│       │   │   ├── gold.png
+│       │   │   ├── moss.png
+│       │   │   ├── pink.png
+│       │   │   ├── red.png
+│       │   │   └── white.png
+│       │   └── sleeping
+│       │       ├── blue.png
+│       │       ├── gold.png
+│       │       ├── moss.png
+│       │       ├── pink.png
+│       │       ├── red.png
+│       │       └── white.png
+│       ├── favicon.png
+│       └── rooms
+│           ├── library.png
+│           ├── reading-nook.png
+│           └── tourney-hall.png
+├── book_dragon_client.iml
+├── build
+│   ├── 6a13631de504fd342a00bee1dd18aceb
+│   │   ├── _composite.stamp
+│   │   ├── dart_build_result.json
+│   │   ├── dart_build.d
+│   │   ├── dart_build.stamp
+│   │   ├── gen_dart_plugin_registrant.stamp
+│   │   ├── gen_localizations.stamp
+│   │   └── outputs.json
+│   ├── be00bfc6c648760d34c439e0f7c20a54.cache.dill.track.dill
+│   ├── flutter_assets
+│   │   ├── AssetManifest.bin
+│   │   ├── AssetManifest.bin.json
+│   │   ├── assets
+│   │   │   └── images
+│   │   │       ├── appicon.png
+│   │   │       ├── characters
+│   │   │       │   └── knight.png
+│   │   │       ├── dragons
+│   │   │       │   ├── flying
+│   │   │       │   │   ├── blue.png
+│   │   │       │   │   ├── gold.png
+│   │   │       │   │   ├── moss.png
+│   │   │       │   │   ├── pink.png
+│   │   │       │   │   ├── red.png
+│   │   │       │   │   └── white.png
+│   │   │       │   └── sleeping
+│   │   │       │       ├── blue.png
+│   │   │       │       ├── gold.png
+│   │   │       │       ├── moss.png
+│   │   │       │       ├── pink.png
+│   │   │       │       ├── red.png
+│   │   │       │       └── white.png
+│   │   │       ├── favicon.png
+│   │   │       └── rooms
+│   │   │           ├── library.png
+│   │   │           ├── reading-nook.png
+│   │   │           └── tourney-hall.png
+│   │   ├── FontManifest.json
+│   │   ├── fonts
+│   │   │   └── MaterialIcons-Regular.otf
+│   │   ├── NOTICES
+│   │   ├── packages
+│   │   │   └── cupertino_icons
+│   │   │       └── assets
+│   │   │           └── CupertinoIcons.ttf
+│   │   └── shaders
+│   │       ├── ink_sparkle.frag
+│   │       └── stretch_effect.frag
+│   ├── native_assets
+│   │   ├── flutter-tester
+│   │   ├── macos
+│   │   │   └── native_assets.json
+│   │   └── web
+│   ├── test_cache
+│   │   └── build
+│   │       └── be00bfc6c648760d34c439e0f7c20a54.cache.dill.track.dill
+│   ├── unit_test_assets
+│   │   ├── AssetManifest.bin
+│   │   ├── assets
+│   │   │   └── images
+│   │   │       ├── dragons
+│   │   │       │   └── sleeping
+│   │   │       │       ├── blue.png
+│   │   │       │       ├── gold.png
+│   │   │       │       ├── moss.png
+│   │   │       │       ├── pink.png
+│   │   │       │       ├── red.png
+│   │   │       │       └── white.png
+│   │   │       └── rooms
+│   │   │           ├── library.png
+│   │   │           └── reading-nook.png
+│   │   ├── FontManifest.json
+│   │   ├── fonts
+│   │   │   └── MaterialIcons-Regular.otf
+│   │   ├── NativeAssetsManifest.json
+│   │   ├── NOTICES.Z
+│   │   ├── packages
+│   │   │   └── cupertino_icons
+│   │   │       └── assets
+│   │   │           └── CupertinoIcons.ttf
+│   │   └── shaders
+│   │       ├── ink_sparkle.frag
+│   │       └── stretch_effect.frag
+│   └── web
+│       ├── assets
+│       │   ├── AssetManifest.bin
+│       │   ├── AssetManifest.bin.json
+│       │   ├── assets
+│       │   │   └── images
+│       │   │       ├── dragons
+│       │   │       │   └── sleeping
+│       │   │       │       ├── blue.png
+│       │   │       │       ├── gold.png
+│       │   │       │       ├── moss.png
+│       │   │       │       ├── pink.png
+│       │   │       │       ├── red.png
+│       │   │       │       └── white.png
+│       │   │       └── rooms
+│       │   │           ├── library.png
+│       │   │           └── reading-nook.png
+│       │   ├── FontManifest.json
+│       │   ├── fonts
+│       │   │   └── MaterialIcons-Regular.otf
+│       │   ├── NOTICES
+│       │   ├── packages
+│       │   │   └── cupertino_icons
+│       │   │       └── assets
+│       │   │           └── CupertinoIcons.ttf
+│       │   └── shaders
+│       │       ├── ink_sparkle.frag
+│       │       └── stretch_effect.frag
+│       ├── canvaskit
+│       │   ├── canvaskit.js
+│       │   ├── canvaskit.js.symbols
+│       │   ├── canvaskit.wasm
+│       │   ├── chromium
+│       │   │   ├── canvaskit.js
+│       │   │   ├── canvaskit.js.symbols
+│       │   │   └── canvaskit.wasm
+│       │   ├── skwasm_heavy.js
+│       │   ├── skwasm_heavy.js.symbols
+│       │   ├── skwasm_heavy.wasm
+│       │   ├── skwasm.js
+│       │   ├── skwasm.js.symbols
+│       │   └── skwasm.wasm
+│       ├── favicon.png
+│       ├── flutter_bootstrap.js
+│       ├── flutter_service_worker.js
+│       ├── flutter.js
+│       ├── icons
+│       │   ├── Icon-192.png
+│       │   ├── Icon-512.png
+│       │   ├── Icon-maskable-192.png
+│       │   └── Icon-maskable-512.png
+│       ├── index.html
+│       ├── main.dart.js
+│       ├── manifest.json
+│       ├── robots.txt
+│       └── version.json
+├── docker-compose.yml
+├── Dockerfile
+├── docs
+│   ├── features
+│   │   ├── authentication.md
+│   │   ├── dragon_companion.md
+│   │   ├── focus_timer.md
+│   │   └── library_management.md
+│   ├── file-strucuture.txt
+│   ├── models
+│   │   └── data_models.md
+│   └── overview.md
+├── file_structure.txt
+├── GEMINI.md
+├── ios
+│   ├── Flutter
+│   │   ├── AppFrameworkInfo.plist
+│   │   ├── Debug.xcconfig
+│   │   ├── ephemeral
+│   │   │   ├── flutter_lldb_helper.py
+│   │   │   └── flutter_lldbinit
+│   │   ├── flutter_export_environment.sh
+│   │   ├── Generated.xcconfig
+│   │   └── Release.xcconfig
+│   ├── Podfile
+│   ├── Runner
+│   │   ├── AppDelegate.swift
+│   │   ├── Assets.xcassets
+│   │   │   ├── AppIcon.appiconset
+│   │   │   │   ├── Contents.json
+│   │   │   │   ├── Icon-App-1024x1024@1x.png
+│   │   │   │   ├── Icon-App-20x20@1x.png
+│   │   │   │   ├── Icon-App-20x20@2x.png
+│   │   │   │   ├── Icon-App-20x20@3x.png
+│   │   │   │   ├── Icon-App-29x29@1x.png
+│   │   │   │   ├── Icon-App-29x29@2x.png
+│   │   │   │   ├── Icon-App-29x29@3x.png
+│   │   │   │   ├── Icon-App-40x40@1x.png
+│   │   │   │   ├── Icon-App-40x40@2x.png
+│   │   │   │   ├── Icon-App-40x40@3x.png
+│   │   │   │   ├── Icon-App-50x50@1x.png
+│   │   │   │   ├── Icon-App-50x50@2x.png
+│   │   │   │   ├── Icon-App-57x57@1x.png
+│   │   │   │   ├── Icon-App-57x57@2x.png
+│   │   │   │   ├── Icon-App-60x60@2x.png
+│   │   │   │   ├── Icon-App-60x60@3x.png
+│   │   │   │   ├── Icon-App-72x72@1x.png
+│   │   │   │   ├── Icon-App-72x72@2x.png
+│   │   │   │   ├── Icon-App-76x76@1x.png
+│   │   │   │   ├── Icon-App-76x76@2x.png
+│   │   │   │   └── Icon-App-83.5x83.5@2x.png
+│   │   │   └── LaunchImage.imageset
+│   │   │       ├── Contents.json
+│   │   │       ├── LaunchImage.png
+│   │   │       ├── LaunchImage@2x.png
+│   │   │       ├── LaunchImage@3x.png
+│   │   │       └── README.md
+│   │   ├── Base.lproj
+│   │   │   ├── LaunchScreen.storyboard
+│   │   │   └── Main.storyboard
+│   │   ├── GeneratedPluginRegistrant.h
+│   │   ├── GeneratedPluginRegistrant.m
+│   │   ├── Info.plist
+│   │   └── Runner-Bridging-Header.h
+│   ├── Runner.xcodeproj
+│   │   ├── project.pbxproj
+│   │   ├── project.xcworkspace
+│   │   │   ├── contents.xcworkspacedata
+│   │   │   └── xcshareddata
+│   │   │       ├── IDEWorkspaceChecks.plist
+│   │   │       └── WorkspaceSettings.xcsettings
+│   │   └── xcshareddata
+│   │       └── xcschemes
+│   │           └── Runner.xcscheme
+│   ├── Runner.xcworkspace
+│   │   ├── contents.xcworkspacedata
+│   │   └── xcshareddata
+│   │       ├── IDEWorkspaceChecks.plist
+│   │       └── WorkspaceSettings.xcsettings
+│   └── RunnerTests
+│       └── RunnerTests.swift
+├── lib
+│   ├── config
+│   │   └── app_config.dart
+│   ├── main.dart
+│   ├── models
+│   │   ├── book.dart
+│   │   ├── tourney.dart
+│   │   └── user.dart
+│   ├── screens
+│   │   ├── dragon_selection_screen.dart
+│   │   ├── focus_timer_screen.dart
+│   │   ├── home_screen.dart
+│   │   ├── login_screen.dart
+│   │   ├── main_navigation_screen.dart
+│   │   ├── registration_screen.dart
+│   │   ├── splash_screen.dart
+│   │   ├── tourney_screen.dart
+│   │   └── welcome_screen.dart
+│   ├── services
+│   │   └── tourney_service.dart
+│   ├── theme
+│   │   └── app_theme.dart
+│   ├── view_models
+│   │   └── tourney_view_model.dart
+│   └── widgets
+│       ├── add_book_dialog.dart
+│       ├── book_stack.dart
+│       ├── button.dart
+│       ├── chat_bubble.dart
+│       ├── dragon_art.dart
+│       ├── join_or_create_dialog.dart
+│       ├── responsive_wrapper.dart
+│       └── unsupported_screen.dart
+├── pubspec.lock
+├── pubspec.yaml
+├── README.md
+├── test
+│   ├── button_baseline_test.dart
+│   ├── button_test.dart
+│   ├── dragon_image_rendering_test.dart
+│   ├── focus_timer_book_flow_test.dart
+│   ├── focus_timer_state_test.dart
+│   ├── navigation_test.dart
+│   ├── reader_state_test.dart
+│   ├── responsive_wrapper_test.dart
+│   ├── splash_screen_test.dart
+│   ├── tourney_navigation_test.dart
+│   ├── tourney_screen_test.dart
+│   ├── tourney_viewmodel_test.dart
+│   └── widget_test.dart
+└── web
+    ├── favicon.png
+    ├── icons
+    │   ├── Icon-192.png
+    │   ├── Icon-512.png
+    │   ├── Icon-maskable-192.png
+    │   └── Icon-maskable-512.png
+    ├── index.html
+    ├── manifest.json
+    └── robots.txt
+
+117 directories, 255 files

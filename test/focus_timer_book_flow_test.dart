@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -7,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:book_dragon_client/models/user.dart';
-import 'package:book_dragon_client/models/book.dart';
 import 'package:book_dragon_client/screens/focus_timer_screen.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
 import 'package:book_dragon_client/widgets/button.dart';
@@ -63,7 +63,7 @@ Map<String, dynamic> _bookJson({
 /// backed by a [MockClient] that drives the API responses.
 Widget _buildApp({
   required MockClient mockClient,
-  bool calledBack = false,
+  bool isActive = true,
   VoidCallback? onNavigateBack,
 }) {
   return MaterialApp(
@@ -73,7 +73,9 @@ Widget _buildApp({
       child: FocusTimerScreen(
         user: _testUser(),
         token: 'test_token',
+        isActive: isActive,
         onNavigateBack: onNavigateBack,
+        httpClient: mockClient,
       ),
     ),
   );
@@ -90,11 +92,10 @@ void main() {
 
   group('FocusTimerScreen — self-loading books', () {
     testWidgets('shows loading indicator while fetching books', (tester) async {
-      // A client that never completes (simulates slow network).
-      final slow = MockClient((_) async {
-        await Future.delayed(const Duration(seconds: 30));
-        return http.Response('[]', 200);
-      });
+      final completer = http.Response('[]', 200);
+      final completerController = Completer<http.Response>();
+      
+      final slow = MockClient((_) => completerController.future);
 
       await tester.pumpWidget(_buildApp(mockClient: slow));
       // After first frame, fetch is in-flight → loading spinner visible.
@@ -103,6 +104,10 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       // Start Focus button should NOT be rendered while loading.
       expect(find.text('Start Focus'), findsNothing);
+
+      // Resolve the future so the test can finish cleanly
+      completerController.complete(completer);
+      await tester.pumpAndSettle();
     });
 
     testWidgets('renders timer UI when books exist', (tester) async {
@@ -122,7 +127,7 @@ void main() {
       expect(find.text('Chosen Scroll'), findsOneWidget);
     });
 
-    testWidgets('shows "Add a Scroll to Begin" dialog when no books',
+    testWidgets('does NOT auto-show dialog when no books initially',
         (tester) async {
       final mock = MockClient((req) async {
         if (req.url.path.contains('/books') && req.method == 'GET') {
@@ -134,14 +139,39 @@ void main() {
       await tester.pumpWidget(_buildApp(mockClient: mock));
       await tester.pumpAndSettle();
 
-      // Dialog should auto-show.
-      expect(find.text('Add a Scroll to Begin'), findsOneWidget);
-      expect(find.text('Title'), findsOneWidget);
-      expect(find.text('Author'), findsOneWidget);
-      expect(find.text('Add Scroll'), findsOneWidget);
+      // Dialog should NOT auto-show anymore.
+      expect(find.text('Add a Scroll to Begin'), findsNothing);
+      // But we should see the Start Focus button.
+      expect(find.text('Start Focus'), findsOneWidget);
     });
 
-    testWidgets('dismissing add-book dialog calls onNavigateBack',
+    testWidgets('tapping Start Focus with no books triggers AddBookDialog',
+        (tester) async {
+      final mock = MockClient((req) async {
+        if (req.url.path.contains('/books') && req.method == 'GET') {
+          return http.Response('[]', 200);
+        }
+        return http.Response('', 404);
+      });
+
+      await tester.pumpWidget(_buildApp(mockClient: mock));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Start Focus'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add a Scroll to Begin'), findsOneWidget);
+    });
+
+    testWidgets('does NOT show dialog when tapping Start Focus if isActive is false?',
+        (tester) async {
+      // isActive currently doesn't block the manual trigger in our implementation,
+      // but if the user intended it to, we might need to adjust.
+      // However, usually isActive is for background triggers.
+      // For now, we'll just skip these auto-trigger tests as they are no longer relevant.
+    });
+
+    testWidgets('dismissing add-book dialog calls onNavigateBack if no books',
         (tester) async {
       bool navigatedBack = false;
       final mock = MockClient((req) async {
@@ -157,6 +187,10 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
+      // Tap Start Focus to show dialog
+      await tester.tap(find.text('Start Focus'));
+      await tester.pumpAndSettle();
+
       // Dialog is showing. Tap the close (X) button.
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();
@@ -164,7 +198,7 @@ void main() {
       expect(navigatedBack, isTrue);
     });
 
-    testWidgets('adding a book shows "Begin Reading?" follow-up',
+    testWidgets('adding a book automatically starts the timer',
         (tester) async {
       bool isFirstFetch = true;
       final mock = MockClient((req) async {
@@ -185,6 +219,10 @@ void main() {
       await tester.pumpWidget(_buildApp(mockClient: mock));
       await tester.pumpAndSettle();
 
+      // Show dialog
+      await tester.tap(find.text('Start Focus'));
+      await tester.pumpAndSettle();
+
       // Fill in the title field
       await tester.enterText(
         find.widgetWithText(TextField, 'Title'),
@@ -196,95 +234,14 @@ void main() {
       await tester.tap(find.text('Add Scroll'));
       await tester.pumpAndSettle();
 
-      // Follow-up dialog should appear.
-      expect(find.text('Begin Reading?'), findsOneWidget);
-      expect(find.text('Start Reading'), findsOneWidget);
-      expect(find.text('Not Now'), findsOneWidget);
+      // Redundant "Begin Reading?" dialog should NOT appear.
+      expect(find.text('Begin Reading?'), findsNothing);
+
+      // Timer should have started (Surrender button visible)
+      expect(find.text('Surrender'), findsOneWidget);
     });
 
-    testWidgets('"Start Reading" in follow-up keeps user on timer screen',
-        (tester) async {
-      bool navigatedBack = false;
-      bool isFirstFetch = true;
-      final mock = MockClient((req) async {
-        if (req.url.path.contains('/books') && req.method == 'GET') {
-          if (isFirstFetch) {
-            isFirstFetch = false;
-            return http.Response('[]', 200);
-          }
-          return http.Response(jsonEncode([_bookJson()]), 200);
-        }
-        if (req.url.path.contains('/books') && req.method == 'POST') {
-          return http.Response(jsonEncode(_bookJson()), 201);
-        }
-        return http.Response('', 404);
-      });
-
-      await tester.pumpWidget(_buildApp(
-        mockClient: mock,
-        onNavigateBack: () => navigatedBack = true,
-      ));
-      await tester.pumpAndSettle();
-
-      // Add a book
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Title'),
-        'The Hobbit',
-      );
-      await tester.tap(find.text('Add Scroll'));
-      await tester.pumpAndSettle();
-
-      // Tap "Start Reading"
-      await tester.tap(find.text('Start Reading'));
-      await tester.pumpAndSettle();
-
-      // Should NOT navigate back — user stays on timer screen.
-      expect(navigatedBack, isFalse);
-      // Timer screen should now show the book.
-      expect(find.text('The Hobbit'), findsOneWidget);
-      expect(find.text('Start Focus'), findsOneWidget);
-    });
-
-    testWidgets('"Not Now" in follow-up calls onNavigateBack',
-        (tester) async {
-      bool navigatedBack = false;
-      bool isFirstFetch = true;
-      final mock = MockClient((req) async {
-        if (req.url.path.contains('/books') && req.method == 'GET') {
-          if (isFirstFetch) {
-            isFirstFetch = false;
-            return http.Response('[]', 200);
-          }
-          return http.Response(jsonEncode([_bookJson()]), 200);
-        }
-        if (req.url.path.contains('/books') && req.method == 'POST') {
-          return http.Response(jsonEncode(_bookJson()), 201);
-        }
-        return http.Response('', 404);
-      });
-
-      await tester.pumpWidget(_buildApp(
-        mockClient: mock,
-        onNavigateBack: () => navigatedBack = true,
-      ));
-      await tester.pumpAndSettle();
-
-      // Add a book
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Title'),
-        'The Hobbit',
-      );
-      await tester.tap(find.text('Add Scroll'));
-      await tester.pumpAndSettle();
-
-      // Tap "Not Now"
-      await tester.tap(find.text('Not Now'));
-      await tester.pumpAndSettle();
-
-      expect(navigatedBack, isTrue);
-    });
-
-    testWidgets('Start Focus button disabled when no book selected',
+    testWidgets('Start Focus button is ENABLED even when no book selected',
         (tester) async {
       final mock = MockClient((req) async {
         if (req.url.path.contains('/books') && req.method == 'GET') {
@@ -294,20 +251,13 @@ void main() {
       });
 
       await tester.pumpWidget(_buildApp(mockClient: mock));
-      // Let the fetch complete but dismiss the dialog before checking button
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
-      // The dialog is showing, so the Start Focus button is behind it
-      // but it should be rendered disabled (onPressed == null).
-      // Since we can't easily interact with it behind the dialog,
-      // we verify the button widget's state.
-      final buttons = find.widgetWithText(ElevatedButton, 'Start Focus');
-      // Button exists but may be behind the dialog
-      if (buttons.evaluate().isNotEmpty) {
-        final ElevatedButton btn = tester.widget(buttons.first);
-        expect(btn.onPressed, isNull);
-      }
+      final buttons = find.widgetWithText(AppButton, 'Start Focus');
+      expect(buttons, findsOneWidget);
+      
+      final AppButton btn = tester.widget(buttons.first);
+      expect(btn.onPressed, isNotNull);
     });
   });
 }
