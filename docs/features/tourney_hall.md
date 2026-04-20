@@ -66,7 +66,7 @@ flowchart TD
 
         CheckActive -- Yes --> ChallengeActiveState[State: Challenge Active]
         SetChallengeActive --> ChallengeActiveState
-        ChallengeActiveState --> ActiveElements[Elements:<br/>- Dragon flying in arena<br/>- Share button (Invite Code)<br/>- Stats & Progress Bar in AppBar]
+        ChallengeActiveState --> ActiveElements[Elements:<br/>- Dragon flying in arena<br/>- Share button (Invite Code)<br/>- Stats under Title<br/>- Progress Bar in Arena]
 
         ActiveElements --> DailyCheck{Reading goal met<br/>for the day?}
 

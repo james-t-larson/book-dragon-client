@@ -174,6 +174,7 @@ class _TourneyScreenState extends State<TourneyScreen>
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 16),
                 Text(
                   state.activeTourney!.name,
                   style: GoogleFonts.medievalSharp(
@@ -181,21 +182,16 @@ class _TourneyScreenState extends State<TourneyScreen>
                     color: AppColors.shimmer,
                   ),
                 ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: 180,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: state.overallProgressPercentage,
-                      minHeight: 8,
-                      backgroundColor: AppColors.surface,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.shimmer,
-                      ),
+                if (state.dailyMinutesLeftText != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    state.dailyMinutesLeftText!,
+                    style: GoogleFonts.rosarivo(
+                      fontSize: 14,
+                      color: AppColors.shimmer.withValues(alpha: 0.8),
                     ),
                   ),
-                ),
+                ],
               ],
             )
           : Text(
@@ -259,6 +255,47 @@ class _TourneyScreenState extends State<TourneyScreen>
 
         // ---- Active challenge elements ----
 
+        // Overall progress bar (bottom)
+        if (state.hasActiveChallenge)
+          Positioned(
+            bottom: 30, // Just above the bottom edge
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.shimmer.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Overall Tourney Progress',
+                    style: GoogleFonts.medievalSharp(
+                      fontSize: 16,
+                      color: AppColors.shimmer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: state.overallProgressPercentage,
+                      minHeight: 12,
+                      backgroundColor: AppColors.background.withValues(alpha: 0.6),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.shimmer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
         // Flying dragon (only when challenge is active)
         if (state.hasActiveChallenge)
           Positioned(
@@ -283,38 +320,42 @@ class _TourneyScreenState extends State<TourneyScreen>
           ),
 
         // Knight + taunt bubble (only when challenge active & today incomplete)
-        if (state.hasActiveChallenge && !state.isDailyComplete) ...[
-          // Knight character
+        if (state.hasActiveChallenge && !state.isDailyComplete)
           Positioned(
-            bottom: screenSize.height * 0.08,
-            right: screenSize.width * 0.05,
-            child: Image.asset(
-              'assets/images/characters/knight.png',
-              width: 160,
-              height: 200,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                Icons.shield,
-                size: 100,
-                color: AppColors.shimmer.withValues(alpha: 0.5),
-              ),
+            bottom: screenSize.height * 0.18,
+            left: 0,
+            right: 0,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Taunt chat bubble above the knight
+                if (state.currentTaunt.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0, left: 60),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      child: ChatBubble(
+                        key: ValueKey<String>(state.currentTaunt),
+                        text: state.currentTaunt,
+                      ),
+                    ),
+                  ),
+                // Knight character
+                Image.asset(
+                  'assets/images/characters/knight.png',
+                  width: 160,
+                  height: 200,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.shield,
+                    size: 100,
+                    color: AppColors.shimmer.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
             ),
           ),
-
-          // Taunt chat bubble above the knight
-          if (state.currentTaunt.isNotEmpty)
-            Positioned(
-              bottom: screenSize.height * 0.32,
-              right: screenSize.width * 0.02,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                child: ChatBubble(
-                  key: ValueKey<String>(state.currentTaunt),
-                  text: state.currentTaunt,
-                ),
-              ),
-            ),
-        ],
 
         // Error snackbar-like display (Tourney errors)
         if (state.errorMessage != null)

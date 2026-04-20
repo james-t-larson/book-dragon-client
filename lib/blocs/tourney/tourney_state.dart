@@ -66,6 +66,14 @@ class TourneyState extends Equatable {
   String get inviteLinkText =>
       'Join my reading tourney! Enter code: ${activeTourney?.inviteCode ?? ''}';
 
+  String? get dailyMinutesLeftText {
+    final dp = activeTourney?.dailyProgress;
+    if (dp == null) return null;
+    if (dp.isComplete) return 'Daily goal reached!';
+    final minutesLeft = dp.minuteGoal - dp.minutesComplete;
+    return '$minutesLeft mins left today';
+  }
+
   @override
   List<Object?> get props => [
         status,
