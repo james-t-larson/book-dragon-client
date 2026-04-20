@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
-import '../view_models/tourney_view_model.dart';
+import '../blocs/tourney/tourney_bloc.dart';
+import '../blocs/tourney/tourney_state.dart';
+import '../blocs/tourney/tourney_event.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../view_models/constants_view_model.dart';
 import '../widgets/button.dart';
 
@@ -13,12 +16,10 @@ import '../widgets/button.dart';
 ///   1. **Join Tourney** – invite-code text field + Join button.
 ///   2. **Create Tourney** – name field, two dropdowns, Start button.
 class JoinOrCreateDialog extends StatefulWidget {
-  final TourneyViewModel viewModel;
   final ConstantsViewModel constantsViewModel;
 
   const JoinOrCreateDialog({
     super.key,
-    required this.viewModel,
     required this.constantsViewModel,
   });
 
@@ -31,6 +32,15 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
   late final TabController _tabController;
   final _inviteCodeController = TextEditingController();
   final _nameController = TextEditingController();
+
+  String _draftName = '';
+  int? _draftDailyMinutes;
+  int? _draftOverallDays;
+
+  bool get _isValidDraft =>
+      _draftName.trim().isNotEmpty &&
+      _draftDailyMinutes != null &&
+      _draftOverallDays != null;
 
   @override
   void initState() {
@@ -48,7 +58,6 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
 
   @override
   Widget build(BuildContext context) {
-    final vm = widget.viewModel;
     final cvm = widget.constantsViewModel;
 
     return Dialog(
@@ -112,8 +121,8 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildJoinTab(vm),
-                _buildCreateTab(vm, cvm),
+                _buildJoinTab(),
+                _buildCreateTab(cvm),
               ],
             ),
           ),
@@ -126,7 +135,7 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
   // Join tab
   // ---------------------------------------------------------------------------
 
-  Widget _buildJoinTab(TourneyViewModel vm) {
+  Widget _buildJoinTab() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -163,48 +172,55 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
             ),
           ),
           const SizedBox(height: 24),
-          AppButton(
-            onPressed: vm.isLoading
-                ? null
-                : () async {
+          context.watch<TourneyBloc>().state.isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.secondary,
+                  ),
+                )
+              : AppButton(
+                  onPressed: () {
                     final code = _inviteCodeController.text.trim();
                     if (code.isEmpty) return;
-                    await vm.joinChallenge(code);
-                    if (vm.hasActiveChallenge && mounted) {
-                      Navigator.pop(context);
-                    }
+                    context.read<TourneyBloc>().add(JoinChallenge(code));
                   },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
-            ),
-            child: vm.isLoading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.onPrimary,
-                    ),
-                  )
-                : Text(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                  ),
+                  child: Text(
                     'Join',
                     style: GoogleFonts.medievalSharp(
                       color: AppColors.onPrimary,
                       fontSize: 16,
                     ),
                   ),
+                ),
+          BlocConsumer<TourneyBloc, TourneyState>(
+            listener: (context, state) {
+              if (state.hasActiveChallenge) {
+                Navigator.pop(context);
+              }
+            },
+            builder: (context, state) {
+              if (state.errorMessage != null) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    state.errorMessage!,
+                    style: GoogleFonts.rosarivo(
+                      fontSize: 12,
+                      color: AppColors.primaryLight,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
-          if (vm.errorMessage != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              vm.errorMessage!,
-              style: GoogleFonts.rosarivo(
-                fontSize: 12,
-                color: AppColors.primaryLight,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
         ],
       ),
     );
@@ -214,17 +230,14 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
   // Create tab
   // ---------------------------------------------------------------------------
 
-  Widget _buildCreateTab(TourneyViewModel vm, ConstantsViewModel cvm) {
+  Widget _buildCreateTab(ConstantsViewModel cvm) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SingleChildScrollView(
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider.value(value: vm),
-            ChangeNotifierProvider.value(value: cvm),
-          ],
-          child: Consumer2<TourneyViewModel, ConstantsViewModel>(
-            builder: (context, vm, cvm, _) {
+        child: ChangeNotifierProvider.value(
+          value: cvm,
+          child: Consumer<ConstantsViewModel>(
+            builder: (context, cvm, _) {
               final constants = cvm.tourneyConfig;
               return Column(
                 children: [
@@ -233,7 +246,7 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
                   TextField(
                     controller: _nameController,
                     style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                    onChanged: vm.setDraftName,
+                    onChanged: (val) => setState(() => _draftName = val),
                     decoration: InputDecoration(
                       labelText: 'Tournament Name',
                       labelStyle: GoogleFonts.rosarivo(color: AppColors.muted),
@@ -256,7 +269,7 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
 
                   // Daily Commitment dropdown
                   DropdownButtonFormField<int>(
-                    initialValue: vm.draftDailyMinutes,
+                    initialValue: _draftDailyMinutes,
                     dropdownColor: AppColors.surface,
                     style: GoogleFonts.rosarivo(color: AppColors.onSurface),
                     decoration: InputDecoration(
@@ -278,13 +291,13 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
                                 ))
                             .toList() ??
                         [],
-                    onChanged: vm.setDraftDailyMinutes,
+                    onChanged: (val) => setState(() => _draftDailyMinutes = val),
                   ),
                   const SizedBox(height: 16),
 
                   // Overall Duration dropdown
                   DropdownButtonFormField<int>(
-                    initialValue: vm.draftOverallDays,
+                    initialValue: _draftOverallDays,
                     dropdownColor: AppColors.surface,
                     style: GoogleFonts.rosarivo(color: AppColors.onSurface),
                     decoration: InputDecoration(
@@ -306,59 +319,69 @@ class _JoinOrCreateDialogState extends State<JoinOrCreateDialog>
                                 ))
                             .toList() ??
                         [],
-                    onChanged: vm.setDraftOverallDays,
+                    onChanged: (val) => setState(() => _draftOverallDays = val),
                   ),
                   const SizedBox(height: 20),
 
                   // Start Challenge button
-                  AppButton(
-                    onPressed: (vm.isValidDraft && !vm.isLoading)
-                        ? () async {
-                            final navigator = Navigator.of(context);
-                            await vm.createChallenge(
-                              vm.draftName,
-                              vm.draftDailyMinutes!,
-                              vm.draftOverallDays!,
-                            );
-                            if (vm.hasActiveChallenge && mounted) {
-                              navigator.pop();
-                            }
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      disabledBackgroundColor:
-                          AppColors.primary.withValues(alpha: 0.3),
-                    ),
-                    child: vm.isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.onPrimary,
-                            ),
-                          )
-                        : Text(
+                  context.watch<TourneyBloc>().state.isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : AppButton(
+                          onPressed: _isValidDraft
+                              ? () {
+                                  context.read<TourneyBloc>().add(
+                                        CreateChallenge(
+                                          name: _draftName,
+                                          dailyMins: _draftDailyMinutes!,
+                                          overallDays: _draftOverallDays!,
+                                        ),
+                                      );
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            disabledBackgroundColor:
+                                AppColors.primary.withValues(alpha: 0.3),
+                          ),
+                          child: Text(
                             'Start Challenge',
                             style: GoogleFonts.medievalSharp(
                               color: AppColors.onPrimary,
                               fontSize: 16,
                             ),
                           ),
-                  ),
+                        ),
 
-                  if (vm.errorMessage != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      vm.errorMessage!,
-                      style: GoogleFonts.rosarivo(
-                        fontSize: 12,
-                        color: AppColors.primaryLight,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  BlocConsumer<TourneyBloc, TourneyState>(
+                    listener: (context, state) {
+                      if (state.hasActiveChallenge) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state.errorMessage != null) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(
+                            state.errorMessage!,
+                            style: GoogleFonts.rosarivo(
+                              fontSize: 12,
+                              color: AppColors.primaryLight,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
                   const SizedBox(height: 8),
                 ],
               );

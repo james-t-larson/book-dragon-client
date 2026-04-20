@@ -1,4 +1,5 @@
 import 'book.dart';
+import 'tourney.dart';
 
 class User {
   final int id;
@@ -10,6 +11,7 @@ class User {
   final String? dragonName;
   final String? dragonColor;
   final List<Book> books;
+  final Tourney? tourney;
 
   User({
     required this.id,
@@ -21,6 +23,7 @@ class User {
     this.dragonName,
     this.dragonColor,
     this.books = const [],
+    this.tourney,
   });
 
   User copyWith({
@@ -33,6 +36,7 @@ class User {
     String? dragonName,
     String? dragonColor,
     List<Book>? books,
+    Tourney? tourney,
   }) {
     return User(
       id: id ?? this.id,
@@ -44,6 +48,7 @@ class User {
       dragonName: dragonName ?? this.dragonName,
       dragonColor: dragonColor ?? this.dragonColor,
       books: books ?? this.books,
+      tourney: tourney ?? this.tourney,
     );
   }
 
@@ -60,6 +65,9 @@ class User {
       books: json['books'] != null
           ? (json['books'] as List).map((i) => Book.fromJson(i)).toList()
           : [],
+      tourney: json['tourney'] != null
+          ? Tourney.fromJson(json['tourney'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -74,6 +82,7 @@ class User {
       if (dragonName != null) 'dragon_name': dragonName,
       if (dragonColor != null) 'dragon_color': dragonColor,
       'books': books.map((b) => b.toJson()).toList(),
+      if (tourney != null) 'tourney': tourney!.toJson(),
     };
   }
 }

@@ -9,14 +9,18 @@ import '../models/user.dart';
 import '../services/tourney_service.dart';
 import '../repositories/constants_repository.dart';
 import '../blocs/constants/constants_bloc.dart';
-import '../view_models/tourney_view_model.dart';
+import '../blocs/tourney/tourney_bloc.dart';
+import '../blocs/tourney/tourney_event.dart';
+import '../blocs/tourney/tourney_state.dart';
+import '../repositories/tourney_repository.dart';
 import '../view_models/constants_view_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/join_or_create_dialog.dart';
 
 /// The Tourney Hall (Challenges) screen.
 ///
-/// Creates its own [TourneyViewModel] in [initState] so the taunt timer and
+/// Creates its own [TourneyBloc] in [initState] so the taunt timer and
 /// any polling are scoped exclusively to this screen's lifetime.
 class TourneyScreen extends StatefulWidget {
   final User user;
@@ -36,7 +40,7 @@ class TourneyScreen extends StatefulWidget {
 
 class _TourneyScreenState extends State<TourneyScreen>
     with SingleTickerProviderStateMixin {
-  late final TourneyViewModel _viewModel;
+  late final TourneyBloc _bloc;
   ConstantsViewModel? _constantsViewModel;
   late final AnimationController _dragonBobController;
   late final Animation<double> _dragonBobAnimation;
@@ -45,13 +49,14 @@ class _TourneyScreenState extends State<TourneyScreen>
   @override
   void initState() {
     super.initState();
-    _viewModel = TourneyViewModel(
-      service: TourneyService(
-        token: widget.token,
-        client: widget.httpClient,
+    _bloc = TourneyBloc(
+      repository: TourneyRepository(
+        service: TourneyService(
+          token: widget.token,
+          client: widget.httpClient,
+        ),
       ),
-      userDragonColor: widget.user.dragonColor ?? 'red',
-    )..fetchInitialData();
+    )..add(FetchInitialData());
 
     _initConstants();
 
@@ -82,24 +87,26 @@ class _TourneyScreenState extends State<TourneyScreen>
 
   @override
   void dispose() {
-    _viewModel.dispose();
+    _bloc.close();
     _dragonBobController.dispose();
     super.dispose();
   }
 
-  void _showJoinOrCreateDialog(BuildContext context, TourneyViewModel vm, ConstantsViewModel cvm) {
+  void _showJoinOrCreateDialog(BuildContext context, ConstantsViewModel cvm) {
     showDialog(
       context: context,
-      builder: (_) => JoinOrCreateDialog(
-        viewModel: vm,
-        constantsViewModel: cvm,
+      builder: (_) => BlocProvider.value(
+        value: _bloc,
+        child: JoinOrCreateDialog(
+          constantsViewModel: cvm,
+        ),
       ),
     );
   }
 
   void _shareInviteLink() {
     SharePlus.instance.share(
-      ShareParams(text: _viewModel.inviteLinkText),
+      ShareParams(text: _bloc.state.inviteLinkText),
     );
   }
 
@@ -120,29 +127,33 @@ class _TourneyScreenState extends State<TourneyScreen>
       );
     }
 
-    // Manage animation based on state
-    if (_viewModel.hasActiveChallenge) {
-      if (!_dragonBobController.isAnimating) {
-        _dragonBobController.repeat(reverse: true);
-      }
-    } else {
-      if (_dragonBobController.isAnimating) {
-        _dragonBobController.stop();
-      }
-    }
-
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: _viewModel),
+        BlocProvider<TourneyBloc>.value(value: _bloc),
         ChangeNotifierProvider.value(value: _constantsViewModel!),
       ],
-      child: Consumer2<TourneyViewModel, ConstantsViewModel>(
-        builder: (context, vm, cvm, _) {
-          return Scaffold(
-            backgroundColor: const Color(0xFF2E1C15),
-            extendBodyBehindAppBar: true,
-            appBar: _buildAppBar(vm),
-            body: _buildBody(context, vm, cvm),
+      child: BlocBuilder<TourneyBloc, TourneyState>(
+        builder: (context, state) {
+          // Manage animation based on state
+          if (state.hasActiveChallenge) {
+            if (!_dragonBobController.isAnimating) {
+              _dragonBobController.repeat(reverse: true);
+            }
+          } else {
+            if (_dragonBobController.isAnimating) {
+              _dragonBobController.stop();
+            }
+          }
+          
+          return Consumer<ConstantsViewModel>(
+            builder: (context, cvm, _) {
+              return Scaffold(
+                backgroundColor: const Color(0xFF2E1C15),
+                extendBodyBehindAppBar: true,
+                appBar: _buildAppBar(state),
+                body: _buildBody(context, state, cvm),
+              );
+            },
           );
         },
       ),
@@ -153,18 +164,18 @@ class _TourneyScreenState extends State<TourneyScreen>
   // App Bar
   // ---------------------------------------------------------------------------
 
-  PreferredSizeWidget _buildAppBar(TourneyViewModel vm) {
+  PreferredSizeWidget _buildAppBar(TourneyState state) {
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
-      title: vm.hasActiveChallenge
+      title: state.hasActiveChallenge
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  vm.activeTourney!.name,
+                  state.activeTourney!.name,
                   style: GoogleFonts.medievalSharp(
                     fontSize: 20,
                     color: AppColors.shimmer,
@@ -176,7 +187,7 @@ class _TourneyScreenState extends State<TourneyScreen>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: LinearProgressIndicator(
-                      value: vm.overallProgressPercentage,
+                      value: state.overallProgressPercentage,
                       minHeight: 8,
                       backgroundColor: AppColors.surface,
                       valueColor: const AlwaysStoppedAnimation<Color>(
@@ -194,11 +205,11 @@ class _TourneyScreenState extends State<TourneyScreen>
               ),
             ),
       actions: [
-        if (!vm.hasActiveChallenge)
+        if (!state.hasActiveChallenge)
           IconButton(
             key: const Key('tourney_add_button'),
             icon: const Icon(Icons.add, color: AppColors.shimmer, size: 28),
-            onPressed: () => _showJoinOrCreateDialog(context, vm, _constantsViewModel!),
+            onPressed: () => _showJoinOrCreateDialog(context, _constantsViewModel!),
             tooltip: 'Join or Create Tourney',
           )
         else
@@ -217,7 +228,7 @@ class _TourneyScreenState extends State<TourneyScreen>
   // Body
   // ---------------------------------------------------------------------------
 
-  Widget _buildBody(BuildContext context, TourneyViewModel vm, ConstantsViewModel cvm) {
+  Widget _buildBody(BuildContext context, TourneyState state, ConstantsViewModel cvm) {
     final screenSize = MediaQuery.of(context).size;
 
     return Stack(
@@ -241,7 +252,7 @@ class _TourneyScreenState extends State<TourneyScreen>
         ),
 
         // Loading indicator
-        if (vm.isLoading || cvm.isLoading)
+        if (state.isLoading || cvm.isLoading)
           const Center(
             child: CircularProgressIndicator(color: AppColors.shimmer),
           ),
@@ -249,7 +260,7 @@ class _TourneyScreenState extends State<TourneyScreen>
         // ---- Active challenge elements ----
 
         // Flying dragon (only when challenge is active)
-        if (vm.hasActiveChallenge)
+        if (state.hasActiveChallenge)
           Positioned(
             top: screenSize.height * 0.2,
             left: screenSize.width * 0.15,
@@ -272,7 +283,7 @@ class _TourneyScreenState extends State<TourneyScreen>
           ),
 
         // Knight + taunt bubble (only when challenge active & today incomplete)
-        if (vm.hasActiveChallenge && !vm.isDailyComplete) ...[
+        if (state.hasActiveChallenge && !state.isDailyComplete) ...[
           // Knight character
           Positioned(
             bottom: screenSize.height * 0.08,
@@ -291,27 +302,27 @@ class _TourneyScreenState extends State<TourneyScreen>
           ),
 
           // Taunt chat bubble above the knight
-          if (vm.currentTaunt.isNotEmpty)
+          if (state.currentTaunt.isNotEmpty)
             Positioned(
               bottom: screenSize.height * 0.32,
               right: screenSize.width * 0.02,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 400),
                 child: ChatBubble(
-                  key: ValueKey<String>(vm.currentTaunt),
-                  text: vm.currentTaunt,
+                  key: ValueKey<String>(state.currentTaunt),
+                  text: state.currentTaunt,
                 ),
               ),
             ),
         ],
 
         // Error snackbar-like display (Tourney errors)
-        if (vm.errorMessage != null)
+        if (state.errorMessage != null)
           Positioned(
             bottom: 20,
             left: 20,
             right: 20,
-            child: _buildErrorBanner(vm.errorMessage!),
+            child: _buildErrorBanner(state.errorMessage!),
           ),
 
         // Error snackbar-like display (Constants errors)
