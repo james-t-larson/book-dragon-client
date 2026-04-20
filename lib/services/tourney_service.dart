@@ -68,9 +68,11 @@ class TourneyService {
     _checkUnauthorized(response);
 
     if (response.statusCode == 200) {
-      return Tourney.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic> && data.isNotEmpty) {
+        return Tourney.fromJson(data);
+      }
+      return null; // no active challenge
     }
     if (response.statusCode == 404) {
       return null; // no active challenge

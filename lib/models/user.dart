@@ -65,7 +65,7 @@ class User {
       books: json['books'] != null
           ? (json['books'] as List).map((i) => Book.fromJson(i)).toList()
           : [],
-      tourney: json['tourney'] != null
+      tourney: (json['tourney'] != null && (json['tourney'] as Map).isNotEmpty)
           ? Tourney.fromJson(json['tourney'] as Map<String, dynamic>)
           : null,
     );
