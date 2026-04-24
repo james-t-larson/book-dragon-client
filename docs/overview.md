@@ -61,3 +61,33 @@ graph TD
     Home -.-> HomeScreen
     Swords -.-> TourneyScreen
 ```
+
+
+```flowchart TD
+    A[User opens Challenges] --> B[Select Challenge Type]
+
+    B --> T[Tournament]
+
+    %% Tournament
+    subgraph Tournament Flow
+        T --> T1[View available tournaments]
+        T1 --> T2{User has enough coins?}
+        T2 -- No --> T3[Prompt user to earn or acquire coins]
+        T2 -- Yes --> T4[Confirm 10-coin buy-in]
+        T4 --> T5[Create tournament entry]
+        T5 --> T6[Add user to participant pool]
+        T6 --> T7[Wait for tournament start]
+        T7 --> T8[Challenge status = Active]
+        T8 --> T9[User logs reading session]
+        T9 --> T10[Validate timer/stopwatch session]
+        T10 --> T11[Update player score]
+        T11 --> T12[Refresh leaderboard]
+        T12 --> T13{Tournament ended?}
+        T13 -- No --> T9
+        T13 -- Yes --> T14[Lock leaderboard]
+        T14 --> T15[Rank users]
+        T15 --> T16[Distribute prize pool: 1st 50%, 2nd 30%, 3rd 20%]
+        T16 --> T17[Mark challenge Settled]
+        T17 --> T18[Send results + reward notifications]
+    end
+```

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
+import '../blocs/navigation/navigation_bloc.dart';
+import '../blocs/navigation/navigation_event.dart';
+import '../blocs/navigation/navigation_state.dart';
+import '../widgets/low_coins_dialog.dart';
 import 'home_screen.dart';
 import 'focus_timer_screen.dart';
 import 'tourney_screen.dart';
@@ -32,37 +37,74 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  late int _currentIndex;
+  late final NavigationBloc _navBloc;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
+    _navBloc = NavigationBloc(initialIndex: widget.initialIndex);
+    
+    // Initial check if starting on Tourney Hall
+    if (widget.initialIndex == 2 && widget.user.coins < 50) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navBloc.add(TabSelected(2, widget.user.coins));
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _navBloc.close();
+    super.dispose();
+  }
+
+  void _showLowCoinsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const LowCoinsDialog(),
+    ).then((_) {
+      _navBloc.add(DismissRestriction());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          // 0 — Focus Timer
-          FocusTimerScreen(
-            user: widget.user,
-            token: widget.token,
-            onNavigateBack: () => setState(() => _currentIndex = 1),
-          ),
-          // 1 — Home (Library)
-          HomeScreen(user: widget.user, token: widget.token),
-          // 2 — Tourney Hall
-          TourneyScreen(user: widget.user, token: widget.token),
-        ],
+    return BlocProvider.value(
+      value: _navBloc,
+      child: BlocListener<NavigationBloc, NavigationState>(
+        listener: (context, state) {
+          if (state.isRestricted) {
+            _showLowCoinsDialog(context);
+          }
+        },
+        child: BlocBuilder<NavigationBloc, NavigationState>(
+          builder: (context, state) {
+            return Scaffold(
+              body: IndexedStack(
+                index: state.currentIndex,
+                children: [
+                  // 0 — Focus Timer
+                  FocusTimerScreen(
+                    user: widget.user,
+                    token: widget.token,
+                    onNavigateBack: () => _navBloc.add(TabSelected(1, widget.user.coins)),
+                  ),
+                  // 1 — Home (Library)
+                  HomeScreen(user: widget.user, token: widget.token),
+                  // 2 — Tourney Hall
+                  TourneyScreen(user: widget.user, token: widget.token),
+                ],
+              ),
+              bottomNavigationBar: _buildBottomNav(state.currentIndex),
+            );
+          },
+        ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(int currentIndex) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -81,8 +123,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       child: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        currentIndex: currentIndex,
+        onTap: (index) => _navBloc.add(TabSelected(index, widget.user.coins)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         type: BottomNavigationBarType.fixed,

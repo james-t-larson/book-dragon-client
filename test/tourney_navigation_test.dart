@@ -33,7 +33,7 @@ User _testUser() => User(
       username: 'testReader',
       email: 'reader@book.dragon',
       createdAt: DateTime(2026, 1, 1),
-      coins: 42,
+      coins: 100,
       dragonId: 10,
       dragonName: 'Mossy',
       dragonColor: 'moss',
@@ -246,6 +246,91 @@ void main() {
       stack = tester.widget<IndexedStack>(find.byType(IndexedStack));
       expect(stack.index, 1);
       expect(stack.children.length, 3); // still all present
+    });
+    testWidgets('tapping Tourney with < 50 coins shows restriction dialog',
+        (tester) async {
+      final user = User(
+        id: 1,
+        username: 'poorReader',
+        email: 'poor@book.dragon',
+        createdAt: DateTime(2026, 1, 1),
+        coins: 49,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: DefaultAssetBundle(
+            bundle: TestAssetBundle(),
+            child: MainNavigationScreen(
+              user: user,
+              token: 'test_token',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Tap the Tourney tab
+      await tester.tap(find.text('Tourney'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100)); // allow for dialog animation
+
+      // Verify LowCoinsDialog is visible
+      expect(find.text('Insufficient Coins'), findsOneWidget);
+      expect(
+        find.text('You can’t participate yet, you need 50 coins to ante up'),
+        findsOneWidget,
+      );
+
+      // Verify index is 2 (it loaded in the background)
+      final indexedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
+      expect(indexedStack.index, 2);
+
+      // Tap 'Understood' button
+      await tester.tap(find.text('Understood'));
+      await tester.pumpAndSettle();
+
+      // Verify redirected back to Home (index 1)
+      final indexedStackAfter =
+          tester.widget<IndexedStack>(find.byType(IndexedStack));
+      expect(indexedStackAfter.index, 1);
+    });
+
+    testWidgets('tapping Tourney with 50 coins allows access without dialog',
+        (tester) async {
+      final user = User(
+        id: 1,
+        username: 'richReader',
+        email: 'rich@book.dragon',
+        createdAt: DateTime(2026, 1, 1),
+        coins: 50,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: DefaultAssetBundle(
+            bundle: TestAssetBundle(),
+            child: MainNavigationScreen(
+              user: user,
+              token: 'test_token',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Tap the Tourney tab
+      await tester.tap(find.text('Tourney'));
+      await tester.pumpAndSettle();
+
+      // Verify NO LowCoinsDialog
+      expect(find.text('Insufficient Coins'), findsNothing);
+
+      // Verify index is 2
+      final indexedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
+      expect(indexedStack.index, 2);
     });
   });
 }
