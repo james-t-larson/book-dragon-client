@@ -22,7 +22,7 @@ The "Dragon Companion" acts as the core gamification hook. By logging reading se
 - **Dragon Gamification Logic**: The application locally assigns different `Color` classes and corresponding `assets/images/dragons/sleeping/{color}.png` sprites based on the saved string of the dragon's color.
 
 ### Asset Mapping
-Asset references dynamically resolve using a helper `_dragonThemeColor` mapping to ensure the UI highlights match the user's chosen beast.
+Asset references dynamically resolve using the global `AppTheme.getDragonColor()` helper to ensure the UI highlights match the user's chosen beast.
 
 | Dragon Variant | Hex Value | Asset Path Preview |
 |----------------|-----------|--------------------|

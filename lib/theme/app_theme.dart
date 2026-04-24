@@ -24,6 +24,38 @@ class AppColors {
 }
 
 class AppTheme {
+  static const List<Shadow> textOutline = [
+    Shadow(offset: Offset(-1.5, -1.5), color: Colors.black, blurRadius: 2.0),
+    Shadow(offset: Offset(1.5, -1.5), color: Colors.black, blurRadius: 2.0),
+    Shadow(offset: Offset(1.5, 1.5), color: Colors.black, blurRadius: 2.0),
+    Shadow(offset: Offset(-1.5, 1.5), color: Colors.black, blurRadius: 2.0),
+  ];
+
+  static Color getDragonColor(String? colorName) {
+    final color = colorName?.toLowerCase();
+    switch (color) {
+      case 'red':
+        return const Color(0xFFCC3333);
+      case 'blue':
+        return const Color(0xFF3388CC);
+      case 'green':
+      case 'moss':
+        return const Color(0xFF408000);
+      case 'gold':
+        return const Color(0xFFD4AF37);
+      case 'pink':
+        return const Color(0xFFCC6699);
+      case 'purple':
+        return const Color(0xFF8844AA);
+      case 'teal':
+        return const Color(0xFF008080);
+      case 'white':
+        return const Color(0xFFF5EED8);
+      default:
+        return AppColors.tertiary;
+    }
+  }
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,

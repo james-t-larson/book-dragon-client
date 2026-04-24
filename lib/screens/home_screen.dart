@@ -32,7 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(
           'Library',
-          style: GoogleFonts.medievalSharp(color: AppColors.onBackground),
+          style: GoogleFonts.medievalSharp(
+            color: AppTheme.getDragonColor(widget.user.dragonColor),
+            shadows: AppTheme.textOutline,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -46,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: AppColors.shimmer,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
+                  shadows: AppTheme.textOutline,
                 ),
               ),
             ),

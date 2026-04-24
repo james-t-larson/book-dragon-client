@@ -112,7 +112,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                               dontShowAgain = value ?? false;
                             });
                           },
-                          activeColor: _dragonThemeColor,
+                          activeColor: AppTheme.getDragonColor(widget.user.dragonColor),
                         ),
                         Expanded(
                           child: Text(
@@ -146,7 +146,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _dragonThemeColor,
+                      backgroundColor: AppTheme.getDragonColor(widget.user.dragonColor),
                     ),
                     child: Text(
                       'Start Timer',
@@ -419,7 +419,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     final Book? newBook = await showDialog<Book>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AddBookDialog(themeColor: _dragonThemeColor),
+      builder: (context) => AddBookDialog(themeColor: AppTheme.getDragonColor(widget.user.dragonColor)),
     );
 
     if (newBook != null && mounted) {
@@ -455,28 +455,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     }
   }
 
-  Color get _dragonThemeColor {
-    final color = widget.user.dragonColor?.toLowerCase();
-    switch (color) {
-      case 'red':
-        return const Color(0xFFCC3333);
-      case 'blue':
-        return const Color(0xFF3388CC);
-      case 'green':
-        return const Color(0xFF408000);
-      case 'gold':
-        return const Color(0xFFD4AF37);
-      case 'pink':
-        return const Color(0xFFCC6699);
-      case 'purple':
-        return const Color(0xFF8844AA);
-      case 'teal':
-        return const Color(0xFF008080);
-      default:
-        return AppColors.tertiary; 
-    }
-  }
-
   String _formatTime(int seconds) {
     final m = (seconds ~/ 60).toString().padLeft(2, '0');
     final s = (seconds % 60).toString().padLeft(2, '0');
@@ -491,7 +469,10 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
       appBar: AppBar(
         title: Text(
           'Focus Timer',
-          style: GoogleFonts.medievalSharp(color: AppColors.onBackground),
+          style: GoogleFonts.medievalSharp(
+            color: AppTheme.getDragonColor(widget.user.dragonColor),
+            shadows: AppTheme.textOutline,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -505,6 +486,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                   color: AppColors.shimmer,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
+                  shadows: AppTheme.textOutline,
                 ),
               ),
             ),
@@ -544,7 +526,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 80),
+                      const SizedBox(height: 150),
 
                       // Book Selector (only show if not running)
                       if (!_isRunning) ...[
@@ -553,7 +535,9 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                           textAlign: TextAlign.center,
                           style: GoogleFonts.rosarivo(
                             fontSize: 18,
-                            color: AppColors.secondaryLight,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.getDragonColor(widget.user.dragonColor),
+                            shadows: AppTheme.textOutline,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -564,7 +548,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                               decoration: BoxDecoration(
                                 color: AppColors.surface.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: _dragonThemeColor),
+                                border: Border.all(color: AppTheme.getDragonColor(widget.user.dragonColor)),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<Book>(
@@ -592,7 +576,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                               _selectedBook?.title ?? 'No Scroll Selected',
                               style: GoogleFonts.medievalSharp(
                                 fontSize: 24,
-                                color: AppColors.onBackground,
+                                color: AppTheme.getDragonColor(widget.user.dragonColor),
+                                shadows: AppTheme.textOutline,
                               ),
                             ),
                           ),
@@ -603,7 +588,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                               'Studying: ${_selectedBook?.title ?? "Unknown Scroll"}',
                               style: GoogleFonts.medievalSharp(
                                 fontSize: 20,
-                                color: _dragonThemeColor,
+                                color: AppTheme.getDragonColor(widget.user.dragonColor),
+                                shadows: AppTheme.textOutline,
                               ),
                             ),
                          ),
@@ -617,18 +603,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                           style: GoogleFonts.medievalSharp(
                             fontSize: 80,
                             fontWeight: FontWeight.bold,
-                            color: _isRunning
-                                ? _dragonThemeColor
-                                : AppColors.onBackground,
-                            shadows: [
-                              Shadow(
-                                color: AppColors.primaryDark.withValues(
-                                  alpha: 0.5,
-                                ),
-                                offset: const Offset(2, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
+                            color: AppTheme.getDragonColor(widget.user.dragonColor),
+                            shadows: AppTheme.textOutline,
                           ),
                         ),
                       ),
@@ -641,7 +617,9 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                           textAlign: TextAlign.center,
                           style: GoogleFonts.rosarivo(
                             fontSize: 18,
-                            color: AppColors.secondaryLight,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.getDragonColor(widget.user.dragonColor),
+                            shadows: AppTheme.textOutline,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -657,7 +635,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                                     style: GoogleFonts.rosarivo(),
                                   ),
                                   selected: _selectedMinutes == mins,
-                                  selectedColor: _dragonThemeColor,
+                                  selectedColor: AppTheme.getDragonColor(widget.user.dragonColor),
                                   backgroundColor: AppColors.surface,
                                   labelStyle: TextStyle(
                                     color: _selectedMinutes == mins
@@ -751,7 +729,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _isRunning
                         ? AppColors.primary
-                        : _dragonThemeColor,
+                        : AppTheme.getDragonColor(widget.user.dragonColor),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
                       vertical: 16,

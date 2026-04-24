@@ -179,7 +179,8 @@ class _TourneyScreenState extends State<TourneyScreen>
                   state.activeTourney!.name,
                   style: GoogleFonts.medievalSharp(
                     fontSize: 20,
-                    color: AppColors.shimmer,
+                    color: AppTheme.getDragonColor(widget.user.dragonColor),
+                    shadows: AppTheme.textOutline,
                   ),
                 ),
                 if (state.dailyMinutesLeftText != null) ...[
@@ -188,7 +189,8 @@ class _TourneyScreenState extends State<TourneyScreen>
                     state.dailyMinutesLeftText!,
                     style: GoogleFonts.rosarivo(
                       fontSize: 14,
-                      color: AppColors.shimmer.withValues(alpha: 0.8),
+                      color: AppTheme.getDragonColor(widget.user.dragonColor),
+                      shadows: AppTheme.textOutline,
                     ),
                   ),
                 ],
@@ -197,7 +199,8 @@ class _TourneyScreenState extends State<TourneyScreen>
           : Text(
               'Tourney Hall',
               style: GoogleFonts.medievalSharp(
-                color: AppColors.onBackground,
+                color: AppTheme.getDragonColor(widget.user.dragonColor),
+                shadows: AppTheme.textOutline,
               ),
             ),
       actions: [
@@ -275,8 +278,9 @@ class _TourneyScreenState extends State<TourneyScreen>
                     'Overall Tourney Progress',
                     style: GoogleFonts.medievalSharp(
                       fontSize: 16,
-                      color: AppColors.shimmer,
+                      color: AppTheme.getDragonColor(widget.user.dragonColor),
                       fontWeight: FontWeight.bold,
+                      shadows: AppTheme.textOutline,
                     ),
                   ),
                   const SizedBox(height: 12),
