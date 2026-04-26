@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,8 +9,14 @@ import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../models/book.dart';
+import '../models/tourney.dart';
 import '../widgets/button.dart';
 import '../widgets/add_book_dialog.dart';
+import '../widgets/tournament_completion_overlay.dart';
+import '../repositories/focus_timer_repository.dart';
+import '../blocs/focus_timer/focus_timer_bloc.dart';
+import '../blocs/focus_timer/focus_timer_event.dart';
+import '../blocs/focus_timer/focus_timer_state.dart';
 
 class FocusTimerScreen extends StatefulWidget {
   final User user;
@@ -40,14 +47,12 @@ class FocusTimerScreen extends StatefulWidget {
 
 class _FocusTimerScreenState extends State<FocusTimerScreen>
     with WidgetsBindingObserver {
-  Timer? _timer;
-  int _selectedMinutes = 15;
-  int _remainingSeconds = 0;
-  bool _isRunning = false;
+  late FocusTimerBloc _focusTimerBloc;
   late int _currentCoins;
   Book? _selectedBook;
   List<Book> _activeBooks = [];
   bool _isFetchingBooks = true;
+  FocusTimerResponse? _completionResponse;
 
   final List<int> _presetMinutes = [1, 5, 15, 30, 45, 60];
   final TextEditingController _customTimeController = TextEditingController();
@@ -57,14 +62,16 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _currentCoins = widget.user.coins;
-    _remainingSeconds = _selectedMinutes * 60;
+    _focusTimerBloc = FocusTimerBloc(
+      repository: FocusTimerRepository(httpClient: widget.httpClient),
+    );
     _fetchActiveBooks(promptIfEmpty: false);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
+    _focusTimerBloc.close();
     _customTimeController.dispose();
     super.dispose();
   }
@@ -73,12 +80,17 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if ((state == AppLifecycleState.paused ||
             state == AppLifecycleState.inactive) &&
-        _isRunning) {
-      _cancelTimer(lostFocus: true);
+        _focusTimerBloc.state is FocusTimerRunning) {
+      _handleCancelTimer(lostFocus: true);
     }
   }
 
-  Future<void> _startTimer() async {
+  Future<void> _handleStartFocus() async {
+    if (_selectedBook == null) {
+      _showAddFirstBookDialog();
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final hideWarning = prefs.getBool('hide_focus_loss_warning') ?? false;
 
@@ -162,33 +174,14 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
         },
       );
 
-      if (shouldStart != true) {
-        return;
-      }
+      if (shouldStart != true) return;
     }
 
-    setState(() {
-      _remainingSeconds = _selectedMinutes * 60;
-      _isRunning = true;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        _completeTimer();
-      }
-    });
+    _focusTimerBloc.add(StartTimer(_focusTimerBloc.state.selectedMinutes));
   }
 
-  void _cancelTimer({bool lostFocus = false}) {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-      _remainingSeconds = _selectedMinutes * 60;
-    });
+  void _handleCancelTimer({bool lostFocus = false}) {
+    _focusTimerBloc.add(const CancelTimer());
 
     if (lostFocus && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -204,63 +197,16 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     }
   }
 
-  Future<void> _completeTimer() async {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-    });
-
+  Future<void> _onPromptProgress() async {
     final int? newPage = await _promptForProgress();
-    if (newPage == null) return;
-
-    try {
-      final client = widget.httpClient ?? http.Client();
-      final response = await client.post(
-        Uri.parse('${AppConfig.baseUrl}/focus_timer_complete'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-        body: jsonEncode({
-          'book_id': _selectedBook?.id ?? 0,
-          'minutes': _selectedMinutes,
-          'current_page': newPage,
-        }),
-      );
-
-      if (response.statusCode == 200 && mounted) {
-        final data = jsonDecode(response.body);
-        final coinsEarned = data['coins_earned'];
-        final totalCoins = data['total_coins'];
-
-        setState(() {
-          _currentCoins = totalCoins;
-          _remainingSeconds = _selectedMinutes * 60;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Focus complete! You earned $coinsEarned coins!',
-              style: GoogleFonts.rosarivo(color: AppColors.onPrimary),
-            ),
-            backgroundColor: AppColors.tertiary,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      } else if (mounted) {
-        _showError('Failed to complete focus session. Please try again.');
-        setState(() {
-          _remainingSeconds = _selectedMinutes * 60;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError('Network error occurred.');
-        setState(() {
-          _remainingSeconds = _selectedMinutes * 60;
-        });
-      }
+    if (newPage != null) {
+      _focusTimerBloc.add(SubmitProgress(
+        currentPage: newPage,
+        bookId: _selectedBook?.id ?? 0,
+        token: widget.token,
+      ));
+    } else {
+      _focusTimerBloc.add(const ResetTimer());
     }
   }
 
@@ -336,14 +282,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Book fetching & first-book flow
-  // ---------------------------------------------------------------------------
-
-  /// Fetches the user's currently-reading books from the API.
-  ///
-  /// When [promptIfEmpty] is true and no books are returned, the
-  /// "Add a Scroll to Begin" dialog is shown automatically.
   Future<void> _fetchActiveBooks({bool promptIfEmpty = false}) async {
     setState(() => _isFetchingBooks = true);
     try {
@@ -379,7 +317,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     }
   }
 
-  /// POSTs a new book to the server and re-fetches the active books list.
   Future<bool> _addFirstBook(Book book) async {
     try {
       final client = widget.httpClient ?? http.Client();
@@ -405,16 +342,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     }
   }
 
-  /// Handles the 'Start Focus' button click, checking for an active book.
-  void _handleStartFocus() {
-    if (_selectedBook != null) {
-      _startTimer();
-    } else {
-      _showAddFirstBookDialog();
-    }
-  }
-
-  /// Shows the add book dialog and handles the result.
   Future<void> _showAddFirstBookDialog() async {
     final Book? newBook = await showDialog<Book>(
       context: context,
@@ -425,33 +352,23 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     if (newBook != null && mounted) {
       final success = await _addFirstBook(newBook);
       if (success && mounted) {
-        // Automatically start the timer after successful addition
-        _startTimer();
+        _handleStartFocus();
       }
     } else if (mounted && _activeBooks.isEmpty) {
-      // If they cancelled and still have no books, navigate back
       widget.onNavigateBack?.call();
     }
   }
 
-
   String? get _dragonSpritePath {
     final color = widget.user.dragonColor?.toLowerCase();
     switch (color) {
-      case 'red':
-        return 'assets/images/dragons/sleeping/red.png';
-      case 'blue':
-        return 'assets/images/dragons/sleeping/blue.png';
-      case 'green':
-        return 'assets/images/dragons/sleeping/moss.png';
-      case 'gold':
-        return 'assets/images/dragons/sleeping/gold.png';
-      case 'pink':
-        return 'assets/images/dragons/sleeping/pink.png';
-      case 'white':
-        return 'assets/images/dragons/sleeping/white.png';
-      default:
-        return null;
+      case 'red': return 'assets/images/dragons/sleeping/red.png';
+      case 'blue': return 'assets/images/dragons/sleeping/blue.png';
+      case 'green': return 'assets/images/dragons/sleeping/moss.png';
+      case 'gold': return 'assets/images/dragons/sleeping/gold.png';
+      case 'pink': return 'assets/images/dragons/sleeping/pink.png';
+      case 'white': return 'assets/images/dragons/sleeping/white.png';
+      default: return null;
     }
   }
 
@@ -463,296 +380,323 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(
-          'Focus Timer',
-          style: GoogleFonts.medievalSharp(
-            color: AppTheme.getDragonColor(widget.user.dragonColor),
-            shadows: AppTheme.textOutline,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Center(
-              child: Text(
-                'Coins: $_currentCoins',
-                style: GoogleFonts.rosarivo(
-                  color: AppColors.shimmer,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+    return BlocProvider.value(
+      value: _focusTimerBloc,
+      child: BlocConsumer<FocusTimerBloc, FocusTimerState>(
+        listener: (context, state) {
+          if (state is FocusTimerPromptingProgress) {
+            _onPromptProgress();
+          } else if (state is FocusTimerSuccess) {
+            setState(() {
+              _currentCoins = state.response.totalCoins;
+              if (state.response.tourneyCompleted) {
+                _completionResponse = state.response;
+              }
+            });
+            if (!state.response.tourneyCompleted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Focus complete! You earned ${state.response.coinsEarned} coins!',
+                    style: GoogleFonts.rosarivo(color: AppColors.onPrimary),
+                  ),
+                  backgroundColor: AppColors.tertiary,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
+          } else if (state is FocusTimerFailure) {
+            _showError(state.error);
+          }
+        },
+        builder: (context, state) {
+          final isRunning = state is FocusTimerRunning;
+          final remainingSeconds = state.remainingSeconds;
+
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            extendBodyBehindAppBar: true,
+            appBar: AppBar(
+              title: Text(
+                'Focus Timer',
+                style: GoogleFonts.medievalSharp(
+                  color: AppTheme.getDragonColor(widget.user.dragonColor),
                   shadows: AppTheme.textOutline,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-      body: SizedBox.expand(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                'assets/images/rooms/reading-nook.png',
-                fit: BoxFit.cover,
-              ),
-            ),
-
-            if (_dragonSpritePath != null)
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.7,
-                right: MediaQuery.of(context).size.width * 0.15,
-                child: Image.asset(
-                  _dragonSpritePath!,
-                  width: 180,
-                  height: 180,
-                  fit: BoxFit.contain,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Center(
+                    child: Text(
+                      'Coins: $_currentCoins',
+                      style: GoogleFonts.rosarivo(
+                        color: AppColors.shimmer,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        shadows: AppTheme.textOutline,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            if (_isFetchingBooks)
-              const Center(
-                child: CircularProgressIndicator(color: AppColors.shimmer),
-              )
-            else
-            SafeArea(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 150),
+              ],
+            ),
+            body: SizedBox.expand(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/images/rooms/reading-nook.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
 
-                      // Book Selector (only show if not running)
-                      if (!_isRunning) ...[
-                        Text(
-                          'Chosen Scroll',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.rosarivo(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.getDragonColor(widget.user.dragonColor),
-                            shadows: AppTheme.textOutline,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (_activeBooks.length > 1)
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.getDragonColor(widget.user.dragonColor)),
+                  if (_dragonSpritePath != null)
+                    Positioned(
+                      top: MediaQuery.of(context).size.height * 0.7,
+                      right: MediaQuery.of(context).size.width * 0.15,
+                      child: Image.asset(
+                        _dragonSpritePath!,
+                        width: 180,
+                        height: 180,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+
+                  if (_isFetchingBooks)
+                    const Center(
+                      child: CircularProgressIndicator(color: AppColors.shimmer),
+                    )
+                  else ...[
+                  SafeArea(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 150),
+
+                            if (!isRunning) ...[
+                              Text(
+                                'Chosen Scroll',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.rosarivo(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.getDragonColor(widget.user.dragonColor),
+                                  shadows: AppTheme.textOutline,
+                                ),
                               ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<Book>(
-                                  value: _selectedBook,
-                                  dropdownColor: AppColors.surface,
-                                  style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                                  items: _activeBooks.map((book) {
-                                    return DropdownMenuItem(
-                                      value: book,
-                                      child: Text(book.title),
-                                    );
-                                  }).toList(),
-                                  onChanged: (val) {
-                                    setState(() {
-                                      _selectedBook = val;
-                                    });
-                                  },
+                              const SizedBox(height: 8),
+                              if (_activeBooks.length > 1)
+                                Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface.withValues(alpha: 0.8),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: AppTheme.getDragonColor(widget.user.dragonColor)),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<Book>(
+                                        value: _selectedBook,
+                                        dropdownColor: AppColors.surface,
+                                        style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                                        items: _activeBooks.map((book) {
+                                          return DropdownMenuItem(
+                                            value: book,
+                                            child: Text(book.title),
+                                          );
+                                        }).toList(),
+                                        onChanged: (val) {
+                                          setState(() => _selectedBook = val);
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                Center(
+                                  child: Text(
+                                    _selectedBook?.title ?? 'No Scroll Selected',
+                                    style: GoogleFonts.medievalSharp(
+                                      fontSize: 24,
+                                      color: AppTheme.getDragonColor(widget.user.dragonColor),
+                                      shadows: AppTheme.textOutline,
+                                    ),
+                                  ),
+                                ),
+                            ] else ...[
+                               Center(
+                                  child: Text(
+                                    'Studying: ${_selectedBook?.title ?? "Unknown Scroll"}',
+                                    style: GoogleFonts.medievalSharp(
+                                      fontSize: 20,
+                                      color: AppTheme.getDragonColor(widget.user.dragonColor),
+                                      shadows: AppTheme.textOutline,
+                                    ),
+                                  ),
+                               ),
+                            ],
+
+                            const SizedBox(height: 40),
+
+                            Center(
+                              child: Text(
+                                _formatTime(remainingSeconds),
+                                style: GoogleFonts.medievalSharp(
+                                  fontSize: 80,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.getDragonColor(widget.user.dragonColor),
+                                  shadows: AppTheme.textOutline,
                                 ),
                               ),
                             ),
-                          )
-                        else
-                          Center(
-                            child: Text(
-                              _selectedBook?.title ?? 'No Scroll Selected',
-                              style: GoogleFonts.medievalSharp(
-                                fontSize: 24,
-                                color: AppTheme.getDragonColor(widget.user.dragonColor),
-                                shadows: AppTheme.textOutline,
+
+                            const SizedBox(height: 32),
+
+                            if (!isRunning) ...[
+                              Text(
+                                'Select Duration',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.rosarivo(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.getDragonColor(widget.user.dragonColor),
+                                  shadows: AppTheme.textOutline,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 16),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _presetMinutes
+                                    .map(
+                                      (mins) => ChoiceChip(
+                                        label: Text(
+                                          '$mins m',
+                                          style: GoogleFonts.rosarivo(),
+                                        ),
+                                        selected: state.selectedMinutes == mins,
+                                        selectedColor: AppTheme.getDragonColor(widget.user.dragonColor),
+                                        backgroundColor: AppColors.surface,
+                                        labelStyle: TextStyle(
+                                          color: state.selectedMinutes == mins
+                                              ? AppColors.onPrimary
+                                              : AppColors.onSurface,
+                                        ),
+                                        onSelected: (selected) {
+                                          if (selected) {
+                                            _customTimeController.clear();
+                                            _focusTimerBloc.add(SetDuration(mins));
+                                          }
+                                        },
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                              const SizedBox(height: 16),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 140,
+                                    child: TextField(
+                                      controller: _customTimeController,
+                                      keyboardType: TextInputType.number,
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                                      decoration: InputDecoration(
+                                        hintText: 'Custom',
+                                        hintStyle: GoogleFonts.rosarivo(color: AppColors.muted),
+                                        suffixText: 'm',
+                                        suffixStyle: GoogleFonts.rosarivo(color: AppColors.onSurface),
+                                        filled: true,
+                                        fillColor: AppColors.surface,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      ),
+                                      onChanged: (val) {
+                                        final customVal = int.tryParse(val);
+                                        if (customVal != null && customVal > 0) {
+                                          _focusTimerBloc.add(SetDuration(customVal));
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            if (isRunning) const SizedBox(height: 180), 
+                            const SizedBox(height: 48),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                    Positioned(
+                      bottom: 30,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: AppButton(
+                          onPressed: isRunning
+                              ? () => _handleCancelTimer()
+                              : _handleStartFocus,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isRunning
+                                ? AppColors.primary
+                                : AppTheme.getDragonColor(widget.user.dragonColor),
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            elevation: 8,
                           ),
-                      ] else ...[
-                         // Show current book being read
-                         Center(
-                            child: Text(
-                              'Studying: ${_selectedBook?.title ?? "Unknown Scroll"}',
-                              style: GoogleFonts.medievalSharp(
-                                fontSize: 20,
-                                color: AppTheme.getDragonColor(widget.user.dragonColor),
-                                shadows: AppTheme.textOutline,
-                              ),
+                          child: Text(
+                            isRunning ? 'Surrender' : 'Start Focus',
+                            style: GoogleFonts.medievalSharp(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.onPrimary,
                             ),
-                         ),
-                      ],
-
-                      const SizedBox(height: 40),
-
-                      Center(
-                        child: Text(
-                          _formatTime(_remainingSeconds),
-                          style: GoogleFonts.medievalSharp(
-                            fontSize: 80,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.getDragonColor(widget.user.dragonColor),
-                            shadows: AppTheme.textOutline,
                           ),
                         ),
                       ),
+                    ),
+                  ],
 
-                      const SizedBox(height: 32),
-
-                      if (!_isRunning) ...[
-                        Text(
-                          'Select Duration',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.rosarivo(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.getDragonColor(widget.user.dragonColor),
-                            shadows: AppTheme.textOutline,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _presetMinutes
-                              .map(
-                                (mins) => ChoiceChip(
-                                  label: Text(
-                                    '$mins m',
-                                    style: GoogleFonts.rosarivo(),
-                                  ),
-                                  selected: _selectedMinutes == mins,
-                                  selectedColor: AppTheme.getDragonColor(widget.user.dragonColor),
-                                  backgroundColor: AppColors.surface,
-                                  labelStyle: TextStyle(
-                                    color: _selectedMinutes == mins
-                                        ? AppColors.onPrimary
-                                        : AppColors.onSurface,
-                                  ),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        _selectedMinutes = mins;
-                                        _remainingSeconds = mins * 60;
-                                        _customTimeController.clear();
-                                      });
-                                    }
-                                  },
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        const SizedBox(height: 16),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 140,
-                              child: TextField(
-                                controller: _customTimeController,
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.rosarivo(
-                                  color: AppColors.onSurface,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: 'Custom',
-                                  hintStyle: GoogleFonts.rosarivo(
-                                    color: AppColors.muted,
-                                  ),
-                                  suffixText: 'm',
-                                  suffixStyle: GoogleFonts.rosarivo(
-                                    color: AppColors.onSurface,
-                                  ),
-                                  filled: true,
-                                  fillColor: AppColors.surface,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                ),
-                                onChanged: (val) {
-                                  final customVal = int.tryParse(val);
-                                  if (customVal != null && customVal > 0) {
-                                    setState(() {
-                                      _selectedMinutes = customVal;
-                                      _remainingSeconds = customVal * 60;
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-
-                      if (_isRunning)
-                        const SizedBox(
-                          height: 180,
-                        ), 
-
-                      const SizedBox(height: 48),
-                    ],
-                  ),
-                ),
+                  if (_completionResponse != null)
+                    Positioned.fill(
+                      child: TournamentCompletionOverlay(
+                        response: _completionResponse!,
+                        onDismiss: () {
+                          setState(() => _completionResponse = null);
+                          _focusTimerBloc.add(const ResetTimer());
+                        },
+                      ),
+                    ),
+                  
+                  if (state is FocusTimerCompleting)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      child: const Center(
+                        child: CircularProgressIndicator(color: AppColors.shimmer),
+                      ),
+                    ),
+                ],
               ),
             ),
-
-            if (!_isFetchingBooks)
-            Positioned(
-              bottom: 30,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: AppButton(
-                  onPressed: _isRunning
-                      ? () => _cancelTimer()
-                      : _handleStartFocus,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isRunning
-                        ? AppColors.primary
-                        : AppTheme.getDragonColor(widget.user.dragonColor),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    elevation: 8,
-                    shadowColor: Colors.black,
-                  ),
-                  child: Text(
-                    _isRunning ? 'Surrender' : 'Start Focus',
-                    style: GoogleFonts.medievalSharp(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.onPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

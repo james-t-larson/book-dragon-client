@@ -75,6 +75,10 @@ class Tourney {
   final int id;
   final String inviteCode;
   final String name;
+  final DateTime? startTime;
+  final int? potTotal;
+  final int? challengerCount;
+  final int? completedCount;
   final DailyProgress dailyProgress;
   final OverallProgress overallProgress;
   final List<String> tauntMessages;
@@ -83,6 +87,10 @@ class Tourney {
     required this.id,
     required this.inviteCode,
     required this.name,
+    this.startTime,
+    this.potTotal,
+    this.challengerCount,
+    this.completedCount,
     required this.dailyProgress,
     required this.overallProgress,
     required this.tauntMessages,
@@ -93,13 +101,19 @@ class Tourney {
       id: json['id'] as int,
       inviteCode: json['invite_code'] as String,
       name: json['name'] as String,
+      startTime: json['starttime'] != null
+          ? DateTime.parse(json['starttime'] as String)
+          : null,
+      potTotal: json['pot_total'] as int?,
+      challengerCount: json['challenger_count'] as int?,
+      completedCount: json['completed_count'] as int?,
       dailyProgress:
           DailyProgress.fromJson(json['daily_progress'] as Map<String, dynamic>),
       overallProgress: OverallProgress.fromJson(
           json['overall_progress'] as Map<String, dynamic>),
-      tauntMessages: (json['taunt_messages'] as List)
-          .map((e) => e as String)
-          .toList(),
+      tauntMessages: json['taunt_messages'] != null
+          ? (json['taunt_messages'] as List).map((e) => e as String).toList()
+          : const [],
     );
   }
 
@@ -107,10 +121,43 @@ class Tourney {
         'id': id,
         'invite_code': inviteCode,
         'name': name,
+        'starttime': startTime?.toIso8601String(),
+        'pot_total': potTotal,
+        'challenger_count': challengerCount,
+        'completed_count': completedCount,
         'daily_progress': dailyProgress.toJson(),
         'overall_progress': overallProgress.toJson(),
         'taunt_messages': tauntMessages,
       };
+}
+
+/// Response returned by the `/focus_timer_complete` endpoint.
+class FocusTimerResponse {
+  final int coinsEarned;
+  final int tourneyWinnings;
+  final bool tourneyCompleted;
+  final int totalCoins;
+  final Tourney? tourney;
+
+  const FocusTimerResponse({
+    required this.coinsEarned,
+    required this.tourneyWinnings,
+    required this.tourneyCompleted,
+    required this.totalCoins,
+    this.tourney,
+  });
+
+  factory FocusTimerResponse.fromJson(Map<String, dynamic> json) {
+    return FocusTimerResponse(
+      coinsEarned: json['coins_earned'] ?? 0,
+      tourneyWinnings: json['tourney_winnings'] ?? 0,
+      tourneyCompleted: json['tourney_completed'] ?? false,
+      totalCoins: json['total_coins'] ?? 0,
+      tourney: json['tourney'] != null
+          ? Tourney.fromJson(json['tourney'] as Map<String, dynamic>)
+          : null,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------

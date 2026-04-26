@@ -69,8 +69,7 @@ void main() {
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Verify Configuration state options are present
       expect(find.text('Chosen Scroll'), findsOneWidget);
@@ -97,8 +96,7 @@ void main() {
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Start Focus'));
       await tester.pumpAndSettle();
@@ -127,8 +125,7 @@ void main() {
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Start Focus'));
       await tester.pumpAndSettle();
@@ -158,8 +155,7 @@ void main() {
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Start Focus'));
       await tester.pumpAndSettle();
@@ -199,8 +195,7 @@ void main() {
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
 
       // Start Focus immediately (warning is hidden)
       await tester.tap(find.text('Start Focus'));
