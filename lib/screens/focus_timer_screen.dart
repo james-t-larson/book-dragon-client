@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +17,9 @@ import '../repositories/focus_timer_repository.dart';
 import '../blocs/focus_timer/focus_timer_bloc.dart';
 import '../blocs/focus_timer/focus_timer_event.dart';
 import '../blocs/focus_timer/focus_timer_state.dart';
+import '../blocs/book/book_bloc.dart';
+import '../blocs/book/book_event.dart';
+import '../blocs/book/book_state.dart';
 
 class FocusTimerScreen extends StatefulWidget {
   final User user;
@@ -49,9 +52,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
   late FocusTimerBloc _focusTimerBloc;
   late int _currentCoins;
   Book? _selectedBook;
-  List<Book> _activeBooks = [];
-  bool _isFetchingBooks = true;
   FocusTimerResponse? _completionResponse;
+  bool _pendingStartFocus = false;
 
   final List<int> _presetMinutes = AppConfig.focusTimes;
   final TextEditingController _customTimeController = TextEditingController();
@@ -63,7 +65,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
     _focusTimerBloc = FocusTimerBloc(
       repository: FocusTimerRepository(httpClient: widget.httpClient),
     );
-    _fetchActiveBooks(promptIfEmpty: false);
   }
 
   @override
@@ -284,66 +285,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
     );
   }
 
-  Future<void> _fetchActiveBooks({bool promptIfEmpty = false}) async {
-    setState(() => _isFetchingBooks = true);
-    try {
-      final client = widget.httpClient ?? http.Client();
-      final response = await client.get(
-        Uri.parse('${AppConfig.baseUrl}/books?currently_reading=true'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        final books = data.map((b) => Book.fromJson(b)).toList();
-        setState(() {
-          _activeBooks = books;
-          if (books.isNotEmpty && _selectedBook == null) {
-            _selectedBook = books.first;
-          }
-          _isFetchingBooks = false;
-        });
-
-        if (promptIfEmpty && books.isEmpty && mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _showAddFirstBookDialog();
-          });
-        }
-      } else {
-        setState(() => _isFetchingBooks = false);
-      }
-    } catch (e) {
-      setState(() => _isFetchingBooks = false);
-    }
-  }
-
-  Future<bool> _addFirstBook(Book book) async {
-    try {
-      final client = widget.httpClient ?? http.Client();
-      final response = await client.post(
-        Uri.parse('${AppConfig.baseUrl}/books'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-        body: jsonEncode(book.toJson()),
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        await _fetchActiveBooks();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      if (mounted) {
-        _showError('Failed to add scroll. Please try again.');
-      }
-      return false;
-    }
-  }
-
   Future<void> _showAddFirstBookDialog() async {
     final Book? newBook = await showDialog<Book>(
       context: context,
@@ -352,12 +293,13 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
     );
 
     if (newBook != null && mounted) {
-      final success = await _addFirstBook(newBook);
-      if (success && mounted) {
-        _handleStartFocus();
+      _pendingStartFocus = true;
+      context.read<BookBloc>().add(AddBook(widget.token, newBook));
+    } else if (mounted) {
+      final bookState = context.read<BookBloc>().state;
+      if (bookState is BookLoaded && bookState.activeBooks.isEmpty) {
+        widget.onNavigateBack?.call();
       }
-    } else if (mounted && _activeBooks.isEmpty) {
-      widget.onNavigateBack?.call();
     }
   }
 
@@ -467,12 +409,50 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                       ),
                     ),
 
-                  if (_isFetchingBooks)
-                    const Center(
-                      child: CircularProgressIndicator(color: AppColors.shimmer),
-                    )
-                  else ...[
-                  SafeArea(
+                  BlocConsumer<BookBloc, BookState>(
+                    listener: (context, bookState) {
+                      if (bookState is BookError) {
+                        _showError(bookState.message);
+                      } else if (bookState is BookAddedSuccess) {
+                        if (_selectedBook == null) {
+                          setState(() {
+                            _selectedBook = bookState.book;
+                          });
+                        }
+                        if (_pendingStartFocus) {
+                          _pendingStartFocus = false;
+                          _handleStartFocus();
+                        }
+                      }
+                    },
+                    builder: (context, bookState) {
+                      bool isFetchingBooks = bookState is BookInitial || bookState is BookLoading;
+                      List<Book> activeBooks = [];
+                      if (bookState is BookLoaded) {
+                        activeBooks = bookState.activeBooks;
+                      } else if (bookState is BookAddedSuccess) {
+                        // Optimistically use the new book as the active one temporarily
+                        activeBooks = [bookState.book];
+                      }
+
+                      if (!isFetchingBooks && activeBooks.isNotEmpty && _selectedBook == null) {
+                        // Set the selected book initially
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted && _selectedBook == null) {
+                            setState(() {
+                              _selectedBook = activeBooks.first;
+                            });
+                          }
+                        });
+                      }
+
+                      if (isFetchingBooks) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: AppColors.shimmer),
+                        );
+                      }
+                      
+                      return SafeArea(
                     child: SingleChildScrollView(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -493,7 +473,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              if (_activeBooks.length > 1)
+                              if (activeBooks.length > 1)
                                 Center(
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -507,7 +487,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                                         value: _selectedBook,
                                         dropdownColor: AppColors.surface,
                                         style: GoogleFonts.rosarivo(color: AppColors.onSurface),
-                                        items: _activeBooks.map((book) {
+                                        items: activeBooks.map((book) {
                                           return DropdownMenuItem(
                                             value: book,
                                             child: Text(book.title),
@@ -644,13 +624,14 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                         ),
                       ),
                     ),
-                  ),
-
-                    Positioned(
-                      bottom: 30,
-                      left: 0,
-                      right: 0,
-                      child: Center(
+                  );
+                }),
+                  
+                  Positioned(
+                    bottom: 30,
+                    left: 0,
+                    right: 0,
+                    child: Center(
                         child: AppButton(
                           onPressed: isRunning
                               ? () => _handleCancelTimer()
@@ -674,7 +655,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                         ),
                       ),
                     ),
-                  ],
+
 
                   if (_completionResponse != null)
                     Positioned.fill(

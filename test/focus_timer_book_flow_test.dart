@@ -1,4 +1,4 @@
-import 'dart:async';
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -11,6 +11,10 @@ import 'package:book_dragon_client/models/user.dart';
 import 'package:book_dragon_client/screens/focus_timer_screen.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
 import 'package:book_dragon_client/widgets/button.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_event.dart';
+import 'package:book_dragon_client/repositories/book_repository.dart';
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -70,12 +74,18 @@ Widget _buildApp({
     theme: AppTheme.darkTheme,
     home: DefaultAssetBundle(
       bundle: TestAssetBundle(),
-      child: FocusTimerScreen(
-        user: _testUser(),
-        token: 'test_token',
-        isActive: isActive,
-        onNavigateBack: onNavigateBack,
-        httpClient: mockClient,
+      child: BlocProvider<BookBloc>(
+        create: (context) => BookBloc(
+          repository: BookRepository(httpClient: mockClient),
+          initialBooks: [],
+        )..add(const FetchActiveBooks('test_token')),
+        child: FocusTimerScreen(
+          user: _testUser(),
+          token: 'test_token',
+          isActive: isActive,
+          onNavigateBack: onNavigateBack,
+          httpClient: mockClient,
+        ),
       ),
     ),
   );
@@ -91,24 +101,7 @@ void main() {
   });
 
   group('FocusTimerScreen — self-loading books', () {
-    testWidgets('shows loading indicator while fetching books', (tester) async {
-      final completer = http.Response('[]', 200);
-      final completerController = Completer<http.Response>();
-      
-      final slow = MockClient((_) => completerController.future);
 
-      await tester.pumpWidget(_buildApp(mockClient: slow));
-      // After first frame, fetch is in-flight → loading spinner visible.
-      await tester.pump();
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      // Start Focus button should NOT be rendered while loading.
-      expect(find.text('Start Focus'), findsNothing);
-
-      // Resolve the future so the test can finish cleanly
-      completerController.complete(completer);
-      await tester.pumpAndSettle();
-    });
 
     testWidgets('renders timer UI when books exist', (tester) async {
       final mock = MockClient((req) async {

@@ -10,6 +10,10 @@ import 'package:book_dragon_client/screens/splash_screen.dart';
 import 'package:book_dragon_client/screens/dragon_selection_screen.dart';
 import 'package:book_dragon_client/screens/focus_timer_screen.dart';
 import 'package:book_dragon_client/widgets/dragon_art.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_event.dart';
+import 'package:book_dragon_client/repositories/book_repository.dart';
 
 void main() {
   final List<String> allColors = ['red', 'blue', 'moss', 'gold', 'pink', 'white'];
@@ -91,11 +95,17 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            home: FocusTimerScreen(
-              user: user,
-              token: 'fake_token',
-              httpClient: mockClient,
-            )
+            home: BlocProvider<BookBloc>(
+              create: (_) => BookBloc(
+                repository: BookRepository(httpClient: mockClient),
+                initialBooks: [],
+              )..add(const FetchActiveBooks('fake_token')),
+              child: FocusTimerScreen(
+                user: user,
+                token: 'fake_token',
+                httpClient: mockClient,
+              ),
+            ),
           )
         );
         await tester.pump();

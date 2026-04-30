@@ -7,6 +7,11 @@ import 'package:book_dragon_client/screens/home_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:book_dragon_client/models/user.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
+import 'package:http/testing.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_bloc.dart';
+import 'package:book_dragon_client/repositories/book_repository.dart';
 
 class TestAssetBundle extends CachingAssetBundle {
   @override
@@ -79,14 +84,22 @@ void main() {
         dragonId: 10,
       );
 
+      final mockBookClient = MockClient((_) async => http.Response('[]', 200));
+
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.darkTheme,
           home: DefaultAssetBundle(
             bundle: TestAssetBundle(),
-            child: HomeScreen(
-              user: userWithDragon,
-              token: 'mock_token_456',
+            child: BlocProvider<BookBloc>(
+              create: (_) => BookBloc(
+                repository: BookRepository(httpClient: mockBookClient),
+                initialBooks: [],
+              ),
+              child: HomeScreen(
+                user: userWithDragon,
+                token: 'mock_token_456',
+              ),
             ),
           ),
         ),

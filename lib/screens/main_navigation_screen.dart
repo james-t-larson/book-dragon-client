@@ -6,6 +6,9 @@ import '../models/user.dart';
 import '../blocs/navigation/navigation_bloc.dart';
 import '../blocs/navigation/navigation_event.dart';
 import '../blocs/navigation/navigation_state.dart';
+import '../blocs/book/book_bloc.dart';
+import '../blocs/book/book_event.dart';
+import '../repositories/book_repository.dart';
 import '../widgets/low_coins_dialog.dart';
 import 'home_screen.dart';
 import 'focus_timer_screen.dart';
@@ -38,11 +41,16 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late final NavigationBloc _navBloc;
+  late final BookBloc _bookBloc;
 
   @override
   void initState() {
     super.initState();
     _navBloc = NavigationBloc(initialIndex: widget.initialIndex);
+    _bookBloc = BookBloc(
+      repository: BookRepository(),
+      initialBooks: widget.user.books,
+    );
     
     // Initial check if starting on Tourney Hall
     if (widget.initialIndex == 2 && widget.user.coins < 50) {
@@ -55,6 +63,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void dispose() {
     _navBloc.close();
+    _bookBloc.close();
     super.dispose();
   }
 
@@ -70,12 +79,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _navBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _navBloc),
+        BlocProvider.value(value: _bookBloc),
+      ],
       child: BlocListener<NavigationBloc, NavigationState>(
         listener: (context, state) {
           if (state.isRestricted) {
             _showLowCoinsDialog(context);
+          } else {
+            // Fetch active books when navigating between tabs
+            _bookBloc.add(FetchActiveBooks(widget.token));
           }
         },
         child: BlocBuilder<NavigationBloc, NavigationState>(

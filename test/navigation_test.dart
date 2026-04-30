@@ -7,6 +7,11 @@ import 'package:book_dragon_client/screens/home_screen.dart';
 import 'package:book_dragon_client/screens/welcome_screen.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
 import 'package:book_dragon_client/models/user.dart';
+import 'package:http/testing.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_bloc.dart';
+import 'package:book_dragon_client/repositories/book_repository.dart';
 
 class MockNavigatorObserver extends Mock implements NavigatorObserver {}
 
@@ -56,10 +61,18 @@ void main() {
         dragonColor: 'blue',
       );
 
+      final mockBookClient = MockClient((_) async => http.Response('[]', 200));
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => HomeScreen(user: dummyUser, token: 'token'),
+          builder: (_) => BlocProvider<BookBloc>(
+            create: (_) => BookBloc(
+              repository: BookRepository(httpClient: mockBookClient),
+              initialBooks: [],
+            ),
+            child: HomeScreen(user: dummyUser, token: 'token'),
+          ),
         ),
         (route) => false,
       );

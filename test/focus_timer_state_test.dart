@@ -8,6 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:book_dragon_client/models/user.dart';
 import 'package:book_dragon_client/screens/focus_timer_screen.dart';
 import 'package:book_dragon_client/theme/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_bloc.dart';
+import 'package:book_dragon_client/blocs/book/book_event.dart';
+import 'package:book_dragon_client/repositories/book_repository.dart';
 
 class TestAssetBundle extends CachingAssetBundle {
   @override
@@ -51,23 +55,32 @@ void main() {
     return http.Response('', 404);
   });
 
+  Widget buildTestApp(MockClient client, {bool isActive = true}) {
+    return MaterialApp(
+      theme: AppTheme.darkTheme,
+      home: DefaultAssetBundle(
+        bundle: TestAssetBundle(),
+        child: BlocProvider<BookBloc>(
+          create: (_) => BookBloc(
+            repository: BookRepository(httpClient: client),
+            initialBooks: [],
+          )..add(const FetchActiveBooks('test_token')),
+          child: FocusTimerScreen(
+            user: dummyUser,
+            token: 'test_token',
+            isActive: isActive,
+            httpClient: client,
+          ),
+        ),
+      ),
+    );
+  }
+
   group('Focus Timer States Content', () {
     testWidgets('Initial State - Configuration', (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: DefaultAssetBundle(
-            bundle: TestAssetBundle(),
-            child: FocusTimerScreen(
-              user: dummyUser,
-              token: 'test_token',
-              httpClient: mockClient,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildTestApp(mockClient));
 
       await tester.pumpAndSettle();
 
@@ -82,19 +95,7 @@ void main() {
     testWidgets('Taps "Start Focus" -> Shows WarningDialog', (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({'hide_focus_loss_warning': false});
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: DefaultAssetBundle(
-            bundle: TestAssetBundle(),
-            child: FocusTimerScreen(
-              user: dummyUser,
-              token: 'test_token',
-              httpClient: mockClient,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildTestApp(mockClient));
 
       await tester.pumpAndSettle();
 
@@ -111,19 +112,7 @@ void main() {
     testWidgets('WarningDialog -> Taps "Cancel" -> Reverts to Configuration', (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({'hide_focus_loss_warning': false});
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: DefaultAssetBundle(
-            bundle: TestAssetBundle(),
-            child: FocusTimerScreen(
-              user: dummyUser,
-              token: 'test_token',
-              httpClient: mockClient,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildTestApp(mockClient));
 
       await tester.pumpAndSettle();
 
@@ -141,19 +130,7 @@ void main() {
     testWidgets('WarningDialog -> Confirms Warning -> Countdown Running State -> User Abort (Surrender) -> Configuration', (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({'hide_focus_loss_warning': false});
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: DefaultAssetBundle(
-            bundle: TestAssetBundle(),
-            child: FocusTimerScreen(
-              user: dummyUser,
-              token: 'test_token',
-              httpClient: mockClient,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildTestApp(mockClient));
 
       await tester.pumpAndSettle();
 
@@ -181,20 +158,7 @@ void main() {
     testWidgets('Countdown -> isActive changes from true to false -> FocusLostPenalty -> Configuration', (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({'hide_focus_loss_warning': true});
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: DefaultAssetBundle(
-            bundle: TestAssetBundle(),
-            child: FocusTimerScreen(
-              user: dummyUser,
-              token: 'test_token',
-              isActive: true,
-              httpClient: mockClient,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildTestApp(mockClient));
 
       await tester.pumpAndSettle();
 
@@ -206,20 +170,7 @@ void main() {
       expect(find.text('Surrender'), findsOneWidget);
 
       // Trigger FocusLostPenalty via navigation (isActive: false)
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: DefaultAssetBundle(
-            bundle: TestAssetBundle(),
-            child: FocusTimerScreen(
-              user: dummyUser,
-              token: 'test_token',
-              isActive: false,
-              httpClient: mockClient,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildTestApp(mockClient, isActive: false));
       
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
