@@ -54,7 +54,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   bool _isFetchingBooks = true;
   FocusTimerResponse? _completionResponse;
 
-  final List<int> _presetMinutes = [1, 5, 15, 30, 45, 60];
+  final List<int> _presetMinutes = AppConfig.focusTimes;
   final TextEditingController _customTimeController = TextEditingController();
 
   @override

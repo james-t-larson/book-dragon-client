@@ -1,4 +1,15 @@
 class AppConfig {
+  static const String environment = String.fromEnvironment(
+    'APP_ENV',
+    defaultValue: 'development',
+  );
+
+  static List<int> get focusTimes {
+    if (environment == 'production') {
+      return [15, 30, 45, 60];
+    }
+    return [1, 5, 15, 30, 45, 60];
+  }
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://localhost:8080',
