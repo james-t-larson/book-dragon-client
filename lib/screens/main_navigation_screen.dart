@@ -88,6 +88,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   FocusTimerScreen(
                     user: widget.user,
                     token: widget.token,
+                    isActive: state.currentIndex == 0,
                     onNavigateBack: () => _navBloc.add(TabSelected(1, widget.user.coins)),
                   ),
                   // 1 — Home (Library)

@@ -23,26 +23,34 @@ class FocusTimerBloc extends Bloc<FocusTimerEvent, FocusTimerState> {
   void _onStartTimer(StartTimer event, Emitter<FocusTimerState> emit) {
     _timer?.cancel();
     final remainingSeconds = event.minutes * 60;
+    final endTime = DateTime.now().add(Duration(seconds: remainingSeconds));
+    
     emit(FocusTimerRunning(
       remainingSeconds: remainingSeconds,
       selectedMinutes: event.minutes,
+      endTime: endTime,
     ));
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      final currentRemaining = state.remainingSeconds - 1;
-      if (currentRemaining >= 0) {
-        add(TimerTicked(currentRemaining));
-      } else {
-        add(const CompleteTimer());
+      if (state is FocusTimerRunning) {
+        final runningState = state as FocusTimerRunning;
+        final currentRemaining = runningState.endTime.difference(DateTime.now()).inSeconds;
+        if (currentRemaining >= 0) {
+          add(TimerTicked(currentRemaining));
+        } else {
+          add(const CompleteTimer());
+        }
       }
     });
   }
 
   void _onTimerTicked(TimerTicked event, Emitter<FocusTimerState> emit) {
     if (state is FocusTimerRunning) {
+      final currentState = state as FocusTimerRunning;
       emit(FocusTimerRunning(
         remainingSeconds: event.remainingSeconds,
-        selectedMinutes: state.selectedMinutes,
+        selectedMinutes: currentState.selectedMinutes,
+        endTime: currentState.endTime,
       ));
     }
   }

@@ -19,7 +19,16 @@ class FocusTimerInitial extends FocusTimerState {
 }
 
 class FocusTimerRunning extends FocusTimerState {
-  const FocusTimerRunning({required super.remainingSeconds, required super.selectedMinutes});
+  final DateTime endTime;
+
+  const FocusTimerRunning({
+    required super.remainingSeconds,
+    required super.selectedMinutes,
+    required this.endTime,
+  });
+
+  @override
+  List<Object?> get props => [remainingSeconds, selectedMinutes, endTime];
 }
 
 class FocusTimerPromptingProgress extends FocusTimerState {

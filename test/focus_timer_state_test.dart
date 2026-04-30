@@ -178,7 +178,7 @@ void main() {
       expect(find.text('Surrender'), findsNothing);
     });
 
-    testWidgets('Countdown -> AppLifecycleState changes to Paused -> FocusLostPenalty -> Configuration', (WidgetTester tester) async {
+    testWidgets('Countdown -> isActive changes from true to false -> FocusLostPenalty -> Configuration', (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({'hide_focus_loss_warning': true});
 
       await tester.pumpWidget(
@@ -189,6 +189,7 @@ void main() {
             child: FocusTimerScreen(
               user: dummyUser,
               token: 'test_token',
+              isActive: true,
               httpClient: mockClient,
             ),
           ),
@@ -204,9 +205,22 @@ void main() {
       // Now in Countdown
       expect(find.text('Surrender'), findsOneWidget);
 
-      // Trigger FocusLostPenalty via Lifecycle changes
-      final state = tester.state(find.byType(FocusTimerScreen)) as dynamic;
-      state.didChangeAppLifecycleState(AppLifecycleState.paused);
+      // Trigger FocusLostPenalty via navigation (isActive: false)
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: DefaultAssetBundle(
+            bundle: TestAssetBundle(),
+            child: FocusTimerScreen(
+              user: dummyUser,
+              token: 'test_token',
+              isActive: false,
+              httpClient: mockClient,
+            ),
+          ),
+        ),
+      );
+      
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
 

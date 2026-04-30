@@ -45,8 +45,7 @@ class FocusTimerScreen extends StatefulWidget {
   State<FocusTimerScreen> createState() => _FocusTimerScreenState();
 }
 
-class _FocusTimerScreenState extends State<FocusTimerScreen>
-    with WidgetsBindingObserver {
+class _FocusTimerScreenState extends State<FocusTimerScreen> {
   late FocusTimerBloc _focusTimerBloc;
   late int _currentCoins;
   Book? _selectedBook;
@@ -60,7 +59,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _currentCoins = widget.user.coins;
     _focusTimerBloc = FocusTimerBloc(
       repository: FocusTimerRepository(httpClient: widget.httpClient),
@@ -70,18 +68,18 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _focusTimerBloc.close();
     _customTimeController.dispose();
     super.dispose();
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if ((state == AppLifecycleState.paused ||
-            state == AppLifecycleState.inactive) &&
-        _focusTimerBloc.state is FocusTimerRunning) {
-      _handleCancelTimer(lostFocus: true);
+  void didUpdateWidget(FocusTimerScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive && !widget.isActive) {
+      if (_focusTimerBloc.state is FocusTimerRunning) {
+        _handleCancelTimer(lostFocus: true);
+      }
     }
   }
 
@@ -184,16 +182,20 @@ class _FocusTimerScreenState extends State<FocusTimerScreen>
     _focusTimerBloc.add(const CancelTimer());
 
     if (lostFocus && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'The dragon vanished! You lost focus and your progress was reset.',
-            style: GoogleFonts.rosarivo(color: AppColors.onPrimary),
-          ),
-          backgroundColor: AppColors.primary,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'The dragon vanished! You lost focus and your progress was reset.',
+                style: GoogleFonts.rosarivo(color: AppColors.onPrimary),
+              ),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
     }
   }
 
